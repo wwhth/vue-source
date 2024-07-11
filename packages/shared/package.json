@@ -3,7 +3,7 @@
 	"version": "0.0.0",
 	"module": "dist/shared.esm-bundler.js",
 	"main": "index.ts",
-	"buildOption": {
+	"buildOptions": {
 		"formats": [
 			"esm-bundler",
 			"cjs"
