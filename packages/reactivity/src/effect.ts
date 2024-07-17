@@ -8,6 +8,9 @@ export function effect(fn, options?) {
 }
 export let activeEffect;
 class ReactiveEffect {
+  public _trackId = 0; //记录当前的effect执行了几次
+  public deps = [];
+  public _depLength = 0;
   // 默认是响应式的
   public active = true;
   // fn用户编写的函数，scheduler(数据发生变化调用run)调度函数
@@ -24,6 +27,27 @@ class ReactiveEffect {
       return this.fn(); //依赖收集
     } finally {
       activeEffect = lastEffect;
+    }
+  }
+  stop() {
+    this.active = false;
+  }
+}
+// 双向记忆
+export function trackEffect(effect, dep) {
+  dep.set(effect, effect._trackId);
+  // 我还想effect和dep关联起来
+  effect.deps[effect._depLength++] = dep;
+  console.log("🚀 ~ trackEffect ~ effect.deps:", effect.deps);
+}
+
+export function triggerEffects(dep) {
+  console.log("🚀 ~ triggerEffects ~ dep:", dep);
+  for (const effect of dep.keys()) {
+    console.log("111111", effect);
+    if (effect.scheduler) {
+      effect.scheduler();
+    } else {
     }
   }
 }

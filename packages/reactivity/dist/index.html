@@ -17,6 +17,7 @@
       effect(() => {
         app.innerHTML = `姓名:${state.name} 年龄:${state.age}`;
       });
+      state.age++;
       setTimeout(() => {
         state.age++;
       }, 1000);

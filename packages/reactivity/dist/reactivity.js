@@ -16,6 +16,10 @@ var ReactiveEffect = class {
   constructor(fn, scheduler) {
     this.fn = fn;
     this.scheduler = scheduler;
+    this._trackId = 0;
+    //记录当前的effect执行了几次
+    this.deps = [];
+    this._depLength = 0;
     // 默认是响应式的
     this.active = true;
   }
@@ -31,12 +35,56 @@ var ReactiveEffect = class {
       activeEffect = lastEffect;
     }
   }
+  stop() {
+    this.active = false;
+  }
 };
+function trackEffect(effect2, dep) {
+  dep.set(effect2, effect2._trackId);
+  effect2.deps[effect2._depLength++] = dep;
+  console.log("\u{1F680} ~ trackEffect ~ effect.deps:", effect2.deps);
+}
+function triggerEffects(dep) {
+  console.log("\u{1F680} ~ triggerEffects ~ dep:", dep);
+  for (const effect2 of dep.keys()) {
+    console.log("111111", effect2);
+    if (effect2.scheduler) {
+      effect2.scheduler();
+    } else {
+    }
+  }
+}
 
 // packages/reactivity/src/reactiveEffect.ts
+var targetMap = /* @__PURE__ */ new WeakMap();
+var createDep = (cleanup, key) => {
+  const dep = /* @__PURE__ */ new Map();
+  dep.__cleanup__ = cleanup;
+  dep.name = key;
+  return dep;
+};
 function track(target, key) {
   if (activeEffect) {
-    console.log("\u{1F680} ~ track ~ activeEffect:", activeEffect, key);
+    let depsMap = targetMap.get(target);
+    if (!depsMap) {
+      depsMap = /* @__PURE__ */ new Map();
+      targetMap.set(target, depsMap);
+    }
+    let dep = depsMap.get(key);
+    if (!dep) {
+      dep = createDep(() => depsMap.delete(key), key);
+      depsMap.set(key, dep);
+    }
+    trackEffect(activeEffect, dep);
+    console.log("\u{1F680} ~ track ~ targetMap:", targetMap);
+  }
+}
+function trigger(target, key, newValue, oldValue) {
+  let depsMap = targetMap.get(target);
+  if (!depsMap) return;
+  let dep = depsMap.get(key);
+  if (dep) {
+    triggerEffects(dep);
   }
 }
 
@@ -50,7 +98,13 @@ var mutableHandlers = {
     return Reflect.get(target, key, receiver);
   },
   set(target, key, value, receiver) {
-    return Reflect.set(target, key, value, receiver);
+    let oldValue = target[key];
+    let result = Reflect.set(target, key, value, receiver);
+    debugger;
+    if (oldValue !== value) {
+      trigger(target, key, value, oldValue);
+    }
+    return result;
   }
 };
 
@@ -77,6 +131,8 @@ function reactive(target) {
 export {
   activeEffect,
   effect,
-  reactive
+  reactive,
+  trackEffect,
+  triggerEffects
 };
 //# sourceMappingURL=reactivity.js.map
