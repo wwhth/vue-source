@@ -10,17 +10,26 @@
     <script type="module">
       // import {reactive,effect} from '../node_modules//vue/dist/vue.esm-browser.js'
       import { reactive, effect } from "./reactivity.js";
-      let obj = { name: "张三", age: 18 };
+      let obj = { name: "张三", age: 18, flag: true };
       let state = reactive(obj);
-      let state1 = reactive(state);
-      console.log("🚀 ~ state:", state, state1, state === state1);
+      // let state1 = reactive(state);
       effect(() => {
-        app.innerHTML = `姓名:${state.name} 年龄:${state.age}`;
+        console.log("effect执行了");
+        // app.innerHTML = `姓名:${state.name} 年龄:${state.age}`;
+        app.innerHTML = state.flag ? state.name : state.age;
       });
-      state.age++;
       setTimeout(() => {
-        state.age++;
+        state.flag = false;
+        setTimeout(() => {
+          console.log("这里不应该收集effect了");
+          state.name = "李四";
+          state.age++;
+        }, 1000);
       }, 1000);
+      // state.age++;
+      // setTimeout(() => {
+      //   state.age++;
+      // }, 1000);
     </script>
   </body>
 </html>

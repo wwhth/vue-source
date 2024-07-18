@@ -11,6 +11,18 @@ function effect(fn, options) {
   _effect.run();
 }
 var activeEffect;
+function preCleanEffect(effect2) {
+  effect2._depLength = 0;
+  effect2._trackId++;
+}
+function postCleanEffect(effect2) {
+  if (effect2.deps.length > effect2._depLength) {
+    for (let i = effect2._depLength; i < effect2.deps.length; i++) {
+      cleanDepEffect(effect2.deps[i], effect2);
+    }
+    effect2.deps.length = effect2._depLength;
+  }
+}
 var ReactiveEffect = class {
   // fn用户编写的函数，scheduler(数据发生变化调用run)调度函数
   constructor(fn, scheduler) {
@@ -30,8 +42,10 @@ var ReactiveEffect = class {
     let lastEffect = activeEffect;
     try {
       activeEffect = this;
+      preCleanEffect(this);
       return this.fn();
     } finally {
+      postCleanEffect(this);
       activeEffect = lastEffect;
     }
   }
@@ -39,10 +53,26 @@ var ReactiveEffect = class {
     this.active = false;
   }
 };
+function cleanDepEffect(dep, effect2) {
+  dep.delete(effect2);
+  if (dep.size === 0) {
+    dep.__cleanup__();
+  }
+}
 function trackEffect(effect2, dep) {
-  dep.set(effect2, effect2._trackId);
-  effect2.deps[effect2._depLength++] = dep;
-  console.log("\u{1F680} ~ trackEffect ~ effect.deps:", effect2.deps);
+  if (dep.get(effect2) !== effect2._trackId) {
+    dep.set(effect2, effect2._trackId);
+    let oldDep = effect2.deps[effect2._depLength];
+    if (oldDep !== dep) {
+      if (oldDep) {
+        cleanDepEffect(oldDep, effect2);
+      }
+      effect2.deps[effect2._depLength++] = dep;
+    } else {
+      effect2._depLength++;
+    }
+  }
+  console.log("\u{1F680} ~ trackEffect ~ effect.deps:", effect2, dep);
 }
 function triggerEffects(dep) {
   console.log("\u{1F680} ~ triggerEffects ~ dep:", dep);
