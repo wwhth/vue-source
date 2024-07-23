@@ -5,6 +5,14 @@ export function effect(fn, options?) {
     _effect.run();
   });
   _effect.run();
+
+  if (options) {
+    Object.assign(_effect, options);
+  }
+
+  const runner = _effect.run.bind(_effect);
+  runner.effect = _effect;
+  return runner;
 }
 export let activeEffect;
 

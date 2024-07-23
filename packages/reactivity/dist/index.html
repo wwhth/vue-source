@@ -13,23 +13,30 @@
       let obj = { name: "张三", age: 18, flag: true };
       let state = reactive(obj);
       // let state1 = reactive(state);
-      effect(() => {
-        console.log("effect执行了");
-        // app.innerHTML = `姓名:${state.name} 年龄:${state.age}`;
-        app.innerHTML = state.flag ? state.name : state.age;
-      });
-      setTimeout(() => {
-        state.flag = false;
-        setTimeout(() => {
-          console.log("这里不应该收集effect了");
-          state.name = "李四";
-          state.age++;
-        }, 1000);
-      }, 1000);
-      // state.age++;
+      let runner = effect(
+        () => {
+          console.log("effect执行了");
+          // app.innerHTML = `姓名:${state.name} 年龄:${state.age}`;
+          app.innerHTML = state.flag ? state.name : state.age;
+        },
+        {
+          scheduler: () => {
+            console.log("scheduler执行了");
+            runner();
+          },
+        }
+      );
       // setTimeout(() => {
-      //   state.age++;
+      //   state.flag = false;
+      //   setTimeout(() => {
+      //     console.log("这里不应该收集effect了");
+      //     state.name = "李四";
+      //     state.age++;
+      //   }, 1000);
       // }, 1000);
+      setTimeout(() => {
+        state.name = "zyz";
+      }, 1000);
     </script>
   </body>
 </html>

@@ -9,6 +9,12 @@ function effect(fn, options) {
     _effect.run();
   });
   _effect.run();
+  if (options) {
+    Object.assign(_effect, options);
+  }
+  const runner = _effect.run.bind(_effect);
+  runner.effect = _effect;
+  return runner;
 }
 var activeEffect;
 function preCleanEffect(effect2) {
@@ -130,7 +136,6 @@ var mutableHandlers = {
   set(target, key, value, receiver) {
     let oldValue = target[key];
     let result = Reflect.set(target, key, value, receiver);
-    debugger;
     if (oldValue !== value) {
       trigger(target, key, value, oldValue);
     }
