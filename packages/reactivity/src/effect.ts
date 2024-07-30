@@ -30,9 +30,10 @@ function postCleanEffect(effect) {
   }
 }
 class ReactiveEffect {
-  public _trackId = 0; //记录当前的effect执行了几次
-  public deps = [];
-  public _depLength = 0;
+  _trackId = 0; //记录当前的effect执行了几次
+  deps = [];
+  _depLength = 0;
+  _running = 0;
   // 默认是响应式的
   public active = true;
   // fn用户编写的函数，scheduler(数据发生变化调用run)调度函数
@@ -46,8 +47,10 @@ class ReactiveEffect {
     try {
       activeEffect = this;
       preCleanEffect(this);
+      this._running++; //运行一次+1
       return this.fn(); //依赖收集
     } finally {
+      this._running--; //结束之后-1
       postCleanEffect(this);
       activeEffect = lastEffect;
     }
@@ -87,12 +90,12 @@ export function trackEffect(effect, dep) {
 }
 
 export function triggerEffects(dep) {
-  console.log("🚀 ~ triggerEffects ~ dep:", dep);
   for (const effect of dep.keys()) {
-    console.log("111111", effect);
-    if (effect.scheduler) {
-      effect.scheduler();
-    } else {
+    if (effect._running === 0) {
+      // 防止重复执行 =>如果不是正在执行的，才能够继续执行
+      if (effect.scheduler) {
+        effect.scheduler();
+      }
     }
   }
 }

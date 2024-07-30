@@ -38,6 +38,7 @@ var ReactiveEffect = class {
     //记录当前的effect执行了几次
     this.deps = [];
     this._depLength = 0;
+    this._running = 0;
     // 默认是响应式的
     this.active = true;
   }
@@ -49,8 +50,10 @@ var ReactiveEffect = class {
     try {
       activeEffect = this;
       preCleanEffect(this);
+      this._running++;
       return this.fn();
     } finally {
+      this._running--;
       postCleanEffect(this);
       activeEffect = lastEffect;
     }
@@ -81,12 +84,11 @@ function trackEffect(effect2, dep) {
   console.log("\u{1F680} ~ trackEffect ~ effect.deps:", effect2, dep);
 }
 function triggerEffects(dep) {
-  console.log("\u{1F680} ~ triggerEffects ~ dep:", dep);
   for (const effect2 of dep.keys()) {
-    console.log("111111", effect2);
-    if (effect2.scheduler) {
-      effect2.scheduler();
-    } else {
+    if (effect2._running === 0) {
+      if (effect2.scheduler) {
+        effect2.scheduler();
+      }
     }
   }
 }
@@ -131,7 +133,11 @@ var mutableHandlers = {
       return true;
     }
     track(target, key);
-    return Reflect.get(target, key, receiver);
+    let res = Reflect.get(target, key, receiver);
+    if (isObject(res)) {
+      return reactive(res);
+    }
+    return res;
   },
   set(target, key, value, receiver) {
     let oldValue = target[key];
