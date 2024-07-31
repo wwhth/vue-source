@@ -24,3 +24,7 @@ export function reactive(target: any) {
   }
   return target;
 }
+
+export function toReactive(target: any) {
+  return isObject(target) ? reactive(target) : target;
+}

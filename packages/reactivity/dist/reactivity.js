@@ -169,10 +169,58 @@ function reactive(target) {
   }
   return target;
 }
+function toReactive(target) {
+  return isObject(target) ? reactive(target) : target;
+}
+
+// packages/reactivity/src/ref.ts
+function ref(value) {
+  return createRef(value);
+}
+function createRef(value) {
+  return new RefImpl(value);
+}
+var RefImpl = class {
+  // 收集对应的effect
+  constructor(rawValue) {
+    this.rawValue = rawValue;
+    this.__v_isRef = true;
+    // 保存原始值
+    this.dep = /* @__PURE__ */ new Set();
+    this._value = toReactive(rawValue);
+  }
+  get value() {
+    trackRefValue(this);
+    return this._value;
+  }
+  set value(newValue) {
+    if (newValue !== this.rawValue) {
+      this._value = newValue;
+      this.rawValue = newValue;
+      triggerRefValue(this);
+    }
+  }
+};
+function trackRefValue(ref2) {
+  if (activeEffect) {
+    trackEffect(
+      activeEffect,
+      ref2.dep = createDep(() => ref2.dep = void 0, "undefined")
+    );
+  }
+}
+function triggerRefValue(ref2) {
+  let dep = ref2.dep;
+  if (dep) {
+    triggerEffects(dep);
+  }
+}
 export {
   activeEffect,
   effect,
   reactive,
+  ref,
+  toReactive,
   trackEffect,
   triggerEffects
 };
