@@ -8,19 +8,27 @@
   <body>
     <div id="app"></div>
     <script type="module">
-      import { reactive, effect, ref } from "./reactivity.js";
+      import {
+        reactive,
+        effect,
+        ref,
+        toRefs,
+        proxyRefs,
+      } from "./reactivity.js";
       let obj = { name: "张三", age: 18, flag: true, address: { n: 1 } };
       let state = reactive(obj);
-      let count = ref(0);
-      let state1 = ref(obj);
-      console.log("🚀 ~ state1:", state1);
-      effect(() => {
-        app.innerHTML = `${count.value}   ${count}`;
-      });
-      console.log("🚀 ~ effect ~ count:", count);
-      setTimeout(() => {
-        count.value++;
-      }, 1000);
+      let state1 = proxyRefs({ ...toRefs(state), a: 200 });
+      console.log("state1: ", state1.age, state1.a);
+      // let count = ref(0);
+      // let state1 = ref(obj);
+      // console.log("🚀 ~ state1:", state1);
+      // effect(() => {
+      //   app.innerHTML = `${count.value}   ${count}`;
+      // });
+      // console.log("🚀 ~ effect ~ count:", count);
+      // setTimeout(() => {
+      //   count.value++;
+      // }, 1000);
     </script>
   </body>
 </html>
