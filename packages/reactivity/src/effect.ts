@@ -1,3 +1,5 @@
+import { DirtyLevels } from "./constants";
+
 export function effect(fn, options?) {
   // 1. 创建effect的时候，会先执行一次fn，此时会访问到响应式数据，触发get
   // 2. 当响应式数据变化的时候，会触发set，此时会执行effect的run方法
@@ -29,16 +31,25 @@ function postCleanEffect(effect) {
     effect.deps.length = effect._depLength; //更新依赖列表的长度
   }
 }
-class ReactiveEffect {
+export class ReactiveEffect {
   _trackId = 0; //记录当前的effect执行了几次
   deps = [];
   _depLength = 0;
   _running = 0;
+  _dirtyLevel = DirtyLevels.Dirty;
   // 默认是响应式的
   public active = true;
   // fn用户编写的函数，scheduler(数据发生变化调用run)调度函数
   constructor(public fn, public scheduler) {}
+  public get dirty() {
+    return this._dirtyLevel === DirtyLevels.Dirty;
+  }
+  public set dirty(value) {
+    this._dirtyLevel = value ? DirtyLevels.Dirty : DirtyLevels.NoDirty;
+  }
   run() {
+    // 每次运行effect后变为Nodirty
+    this._dirtyLevel = DirtyLevels.NoDirty;
     if (!this.active) {
       // 不是激活的，执行后什么都不做
       return this.fn();
@@ -91,6 +102,9 @@ export function trackEffect(effect, dep) {
 
 export function triggerEffects(dep) {
   for (const effect of dep.keys()) {
+    if (effect._dirtyLevel === DirtyLevels.NoDirty) {
+      effect._dirtyLevel = DirtyLevels.Dirty;
+    }
     if (effect._running === 0) {
       // 防止重复执行 =>如果不是正在执行的，才能够继续执行
       if (effect.scheduler) {
