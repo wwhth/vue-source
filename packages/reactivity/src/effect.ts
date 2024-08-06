@@ -6,6 +6,7 @@ export function effect(fn, options?) {
   const _effect = new ReactiveEffect(fn, () => {
     _effect.run();
   });
+  console.log("%c Line:5 🍌 _effect", "color:#2eafb0", _effect);
   _effect.run();
 
   if (options) {
@@ -40,7 +41,7 @@ export class ReactiveEffect {
   // 默认是响应式的
   public active = true;
   // fn用户编写的函数，scheduler(数据发生变化调用run)调度函数
-  constructor(public fn, public scheduler) {}
+  constructor(public fn, public scheduler) { }
   public get dirty() {
     return this._dirtyLevel === DirtyLevels.Dirty;
   }

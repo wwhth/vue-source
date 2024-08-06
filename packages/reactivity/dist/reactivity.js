@@ -11,6 +11,7 @@ function effect(fn, options) {
   const _effect = new ReactiveEffect(fn, () => {
     _effect.run();
   });
+  console.log("%c Line:5 \u{1F34C} _effect", "color:#2eafb0", _effect);
   _effect.run();
   if (options) {
     Object.assign(_effect, options);
@@ -40,6 +41,7 @@ var ReactiveEffect = class {
     this._trackId = 0;
     //记录当前的effect执行了几次
     this.deps = [];
+    //当前effect关联了哪些dep
     this._depLength = 0;
     this._running = 0;
     this._dirtyLevel = 4 /* Dirty */;
@@ -96,6 +98,7 @@ function trackEffect(effect2, dep) {
 }
 function triggerEffects(dep) {
   for (const effect2 of dep.keys()) {
+<<<<<<< HEAD
     if (effect2._dirtyLevel === 0 /* NoDirty */) {
       effect2._dirtyLevel = 4 /* Dirty */;
     }
@@ -103,6 +106,11 @@ function triggerEffects(dep) {
       if (effect2.scheduler) {
         effect2.scheduler();
       }
+=======
+    if (effect2.scheduler) {
+      effect2.scheduler();
+    } else {
+>>>>>>> ad82849 (add: add some annotations)
     }
   }
 }
