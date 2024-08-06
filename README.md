@@ -1,2 +1,7 @@
 # vue-source
-学习vue3.4源码
+
+学习 vue3.4 源码
+
+### computed
+
+![alt text](/static/image.png)
