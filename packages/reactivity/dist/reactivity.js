@@ -98,7 +98,6 @@ function trackEffect(effect2, dep) {
 }
 function triggerEffects(dep) {
   for (const effect2 of dep.keys()) {
-<<<<<<< HEAD
     if (effect2._dirtyLevel === 0 /* NoDirty */) {
       effect2._dirtyLevel = 4 /* Dirty */;
     }
@@ -106,11 +105,6 @@ function triggerEffects(dep) {
       if (effect2.scheduler) {
         effect2.scheduler();
       }
-=======
-    if (effect2.scheduler) {
-      effect2.scheduler();
-    } else {
->>>>>>> ad82849 (add: add some annotations)
     }
   }
 }
@@ -225,10 +219,7 @@ var RefImpl = class {
 };
 function trackRefValue(ref2) {
   if (activeEffect) {
-    trackEffect(
-      activeEffect,
-      ref2.dep = createDep(() => ref2.dep = void 0, "undefined")
-    );
+    trackEffect(activeEffect, (ref2.dep = createDep(() => (ref2.dep = void 0), "undefined")));
   }
 }
 function triggerRefValue(ref2) {
@@ -291,8 +282,7 @@ function proxyRefs(object) {
 function computed(getterOrOptions) {
   let onlyGetter = isFunction(getterOrOptions);
   let getter = onlyGetter ? getterOrOptions : getterOrOptions.get;
-  let setter = onlyGetter ? () => {
-  } : getterOrOptions.set;
+  let setter = onlyGetter ? () => {} : getterOrOptions.set;
   console.log(getter, setter);
   return new ComputedRefImpl(getter, setter);
 }
