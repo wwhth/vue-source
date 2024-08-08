@@ -45,7 +45,7 @@ export function triggerRefValue(ref) {
 }
 class ObjectRefImpl {
   public __v_isRef = true; // 标识当前对象是ref对象
-  constructor(public _object: any, public key: string) {}
+  constructor(public _object: any, public key: string) { }
   get value() {
     return this._object[this.key];
   }
@@ -92,4 +92,8 @@ export function proxyRefs(object: any) {
       }
     },
   });
+}
+
+export function isRef(ref) {
+  return !!(ref && ref.__v_isRef);
 }

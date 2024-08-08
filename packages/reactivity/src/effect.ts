@@ -6,7 +6,7 @@ export function effect(fn, options?) {
   const _effect = new ReactiveEffect(fn, () => {
     _effect.run();
   });
-  console.log("%c Line:5 🍌 _effect", "color:#2eafb0", _effect);
+
   _effect.run();
 
   if (options) {
@@ -98,7 +98,7 @@ export function trackEffect(effect, dep) {
   // dep.set(effect, effect._trackId);
   // // 我还想effect和dep关联起来
   // effect.deps[effect._depLength++] = dep;
-  console.log("🚀 ~ trackEffect ~ effect.deps:", effect, dep);
+
 }
 
 export function triggerEffects(dep) {

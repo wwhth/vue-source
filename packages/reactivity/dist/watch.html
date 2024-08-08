@@ -10,8 +10,14 @@
 <body>
   <div id="app"></div>
   <script type="module">
-    import { watch } from '/node_modules/vue/dist/vue.esm-browser.js'
-    console.log("%c Line:14 🍭 watch", "color:#3f7cff", watch);
+    // import {
+    //   reactive,
+    //   effect,
+    //   ref,
+    //   toRefs,
+    //   proxyRefs,
+    //   computed, watch, watchEffect
+    // } from '/node_modules/vue/dist/vue.esm-browser.js'
     import {
       reactive,
       effect,
@@ -19,28 +25,42 @@
       toRefs,
       proxyRefs,
       computed,
+      watch,
+      watchEffect
     } from "./reactivity.js";
     const state = reactive({
       name: "zyz",
+      age: 18,
+      address: { n: 1 }
     });
-    const aliasName = computed(() => state.name + "alias");
-    const aliasName2 = computed({
-      get() {
-        return state.name + "alias2";
-      },
-      set(val) {
-        state.name = val;
-      },
-    });
+
+    // const aliasName = computed(() => state.name + "alias");
+    // const aliasName2 = computed({
+    //   get() {
+    //     return state.name + "alias2";
+    //   },
+    //   set(val) {
+    //     state.name = val;
+    //   },
+    // });
+    // watch(() => state.name, function (newVal, oldVal) {
+    //   console.log("watch", newVal, oldVal);
+    // }, {
+    //   immediate: true,
+    //   deep: true,
+    // })
+    watchEffect(() => {
+      console.log("watchEffect", state.name)
+    }, {})
     effect(() => {
-      debugger
-      console.log(aliasName.value, 1);
-      console.log(aliasName.value, 2);
-      console.log(aliasName.value, 3);
+      // state.name = "zyz1"
+
+      // console.log("%c Line:56 🥔", "color:#33a5ff", aliasName.value);
+
     });
     setTimeout(() => {
-      debugger
       state.name = "zyz2";
+      // state.address.n = 2;
     }, 2000);
     // 描述实现原理
     // 1.计算属性维护了一个dirty属性，默认为true，当运行过一次之后，就会将dirty变成false，当依赖发生变化时，dirty为true，重新计算

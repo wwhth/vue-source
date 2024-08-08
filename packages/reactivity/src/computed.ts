@@ -5,7 +5,7 @@ import { trackRefValue, triggerRefValue } from "./ref";
 export function computed(getterOrOptions) {
   let onlyGetter = isFunction(getterOrOptions);
   let getter = onlyGetter ? getterOrOptions : getterOrOptions.get;
-  let setter = onlyGetter ? () => {} : getterOrOptions.set;
+  let setter = onlyGetter ? () => { } : getterOrOptions.set;
   console.log(getter, setter);
   return new ComputedRefImpl(getter, setter); // 返回一个计算属性ref
 }
@@ -18,7 +18,7 @@ class ComputedRefImpl {
     this.effect = new ReactiveEffect(
       () => getter(this._value),
       () => {
-        // 计算属性以来的值变化了，我们应该触发渲染重新执行
+        // 计算属性依赖的值变化了，我们应该触发渲染重新执行
         triggerRefValue(this);
       }
     );

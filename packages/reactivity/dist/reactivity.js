@@ -11,7 +11,6 @@ function effect(fn, options) {
   const _effect = new ReactiveEffect(fn, () => {
     _effect.run();
   });
-  console.log("%c Line:5 \u{1F34C} _effect", "color:#2eafb0", _effect);
   _effect.run();
   if (options) {
     Object.assign(_effect, options);
@@ -41,7 +40,6 @@ var ReactiveEffect = class {
     this._trackId = 0;
     //记录当前的effect执行了几次
     this.deps = [];
-    //当前effect关联了哪些dep
     this._depLength = 0;
     this._running = 0;
     this._dirtyLevel = 4 /* Dirty */;
@@ -94,7 +92,6 @@ function trackEffect(effect2, dep) {
       effect2._depLength++;
     }
   }
-  console.log("\u{1F680} ~ trackEffect ~ effect.deps:", effect2, dep);
 }
 function triggerEffects(dep) {
   for (const effect2 of dep.keys()) {
@@ -130,7 +127,6 @@ function track(target, key) {
       depsMap.set(key, dep);
     }
     trackEffect(activeEffect, dep);
-    console.log("\u{1F680} ~ track ~ targetMap:", targetMap);
   }
 }
 function trigger(target, key, newValue, oldValue) {
@@ -188,6 +184,9 @@ function reactive(target) {
 function toReactive(target) {
   return isObject(target) ? reactive(target) : target;
 }
+function isReactive(value) {
+  return !!(value && value["__v_isReactive" /* IS_REACTIVE */]);
+}
 
 // packages/reactivity/src/ref.ts
 function ref(value) {
@@ -219,7 +218,10 @@ var RefImpl = class {
 };
 function trackRefValue(ref2) {
   if (activeEffect) {
-    trackEffect(activeEffect, (ref2.dep = createDep(() => (ref2.dep = void 0), "undefined")));
+    trackEffect(
+      activeEffect,
+      ref2.dep = createDep(() => ref2.dep = void 0, "undefined")
+    );
   }
 }
 function triggerRefValue(ref2) {
@@ -277,12 +279,16 @@ function proxyRefs(object) {
     }
   });
 }
+function isRef(ref2) {
+  return !!(ref2 && ref2.__v_isRef);
+}
 
 // packages/reactivity/src/computed.ts
 function computed(getterOrOptions) {
   let onlyGetter = isFunction(getterOrOptions);
   let getter = onlyGetter ? getterOrOptions : getterOrOptions.get;
-  let setter = onlyGetter ? () => {} : getterOrOptions.set;
+  let setter = onlyGetter ? () => {
+  } : getterOrOptions.set;
   console.log(getter, setter);
   return new ComputedRefImpl(getter, setter);
 }
@@ -308,11 +314,72 @@ var ComputedRefImpl = class {
     this.setter(newValue);
   }
 };
+
+// packages/reactivity/src/apiWatch.ts
+function watch(source, cb, options) {
+  return doWatch(source, cb, options);
+}
+function watchEffect(effect2, options) {
+  return doWatch(effect2, null, options);
+}
+function traverse(source, depth, currentDepth = 0, seen = /* @__PURE__ */ new Set()) {
+  console.log("%c Line:13 \u{1F369} source", "color:#4fff4B", source);
+  if (!isObject(source)) {
+    return source;
+  }
+  if (depth) {
+    if (currentDepth >= depth) {
+      return source;
+    }
+    currentDepth++;
+  }
+  if (seen.has(source)) {
+    return source;
+  }
+  seen.add(source);
+  for (const key in source) {
+    traverse(source[key], depth, currentDepth, seen);
+  }
+  return source;
+}
+function doWatch(source, cb, { deep, immediate }) {
+  const reactiveGetter = (source2) => traverse(source2, deep === false ? 1 : void 0);
+  let getter;
+  if (isReactive(source)) {
+    getter = () => reactiveGetter(source);
+  } else if (isRef(source)) {
+    getter = () => source.value;
+  } else if (isFunction(source)) {
+    getter = source;
+  }
+  let oldValue;
+  const job = () => {
+    if (cb) {
+      const newValue = effect2.run();
+      cb(newValue, oldValue);
+      oldValue = newValue;
+    } else {
+      effect2.run();
+    }
+  };
+  const effect2 = new ReactiveEffect(getter, job);
+  if (cb) {
+    if (immediate) {
+      job();
+    } else {
+      oldValue = effect2.run();
+    }
+  } else {
+    effect2.run();
+  }
+}
 export {
   ReactiveEffect,
   activeEffect,
   computed,
   effect,
+  isReactive,
+  isRef,
   proxyRefs,
   reactive,
   ref,
@@ -322,6 +389,8 @@ export {
   trackEffect,
   trackRefValue,
   triggerEffects,
-  triggerRefValue
+  triggerRefValue,
+  watch,
+  watchEffect
 };
 //# sourceMappingURL=reactivity.js.map
