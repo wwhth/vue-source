@@ -72,19 +72,18 @@ function doWatch(source, cb, { deep, immediate }) {
         }
     }
     const effect = new ReactiveEffect(getter, job)
-
     if (cb) {
-
         if (immediate) {
             job()
         } else {
-
             oldValue = effect.run()
         }
     } else {
         // watchEffect
         effect.run() // 默认会执行一次
-
     }
-
+    const unwatch = () => {
+        effect.stop()
+    }
+    return unwatch
 }
