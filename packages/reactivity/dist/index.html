@@ -1,52 +1,63 @@
 <!DOCTYPE html>
 <html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+  </head>
 
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Document</title>
-</head>
-
-<body>
-  <div id="app"></div>
-  <script type="module">
-    import { watch } from '/node_modules/vue/dist/vue.esm-browser.js'
-    console.log("%c Line:14 🍭 watch", "color:#3f7cff", watch);
-    import {
-      reactive,
-      effect,
-      ref,
-      toRefs,
-      proxyRefs,
-      computed,
-    } from "./reactivity.js";
-    const state = reactive({
-      name: "zyz",
-    });
-    const aliasName = computed(() => state.name + "alias");
-    const aliasName2 = computed({
-      get() {
-        return state.name + "alias2";
-      },
-      set(val) {
-        state.name = val;
-      },
-    });
-    effect(() => {
-      debugger
-      console.log(aliasName.value, 1);
-      console.log(aliasName.value, 2);
-      console.log(aliasName.value, 3);
-    });
-    setTimeout(() => {
-      debugger
-      state.name = "zyz2";
-    }, 2000);
-    // 描述实现原理
-    // 1.计算属性维护了一个dirty属性，默认为true，当运行过一次之后，就会将dirty变成false，当依赖发生变化时，dirty为true，重新计算
-    // 2.计算属性也是一个effect，当计算属性被访问时，会先判断dirty是否为true，如果为true，则重新计算，并将dirty变成false，如果为false，则直接返回上次计算的结果
-    // 3.计算属性具有收集能力，可以收集依赖，当依赖发生变化时，会重新计算
-  </script>
-</body>
-
+  <body>
+    <div id="app"></div>
+    <script type="module">
+      // import { ref, watch } from "/node_modules/vue/dist/vue.esm-browser.js";
+      import {
+        reactive,
+        effect,
+        ref,
+        toRefs,
+        proxyRefs,
+        computed,
+        watch,
+        watchEffect,
+      } from "./reactivity.js";
+      const val = ref("");
+      let timer = 3000;
+      const getData = (timer) => {
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            resolve(timer);
+          }, timer);
+        });
+      };
+      // let quene = [];
+      watch(
+        val,
+        async (_newValue, _oldValue, onCleanup) => {
+          let flag = true;
+          // for (let i = 0; i < quene.length; i++) {
+          //   quene[i]();
+          // }
+          // quene.push(() => {
+          //   falg = false;
+          // });
+          timer -= 1000;
+          onCleanup(() => {
+            flag = false;
+          });
+          let r = await getData(timer);
+          if (flag) {
+            console.log("------");
+            app.innerHTML = r;
+          }
+        },
+        {
+          flush: "sync",
+        }
+      );
+      setTimeout(() => {
+        val.value = "a";
+        val.value = "b";
+      }, 1000);
+    </script>
+  </body>
 </html>
