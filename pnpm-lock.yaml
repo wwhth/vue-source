@@ -40,6 +40,18 @@ importers:
         specifier: ^3.4.31
         version: 3.4.31(typescript@5.5.3)
 
+  packages/runtime-dom:
+    dependencies:
+      '@vue/reactivity':
+        specifier: workspace:^
+        version: link:../reactivity
+      '@vue/shared':
+        specifier: workspace:*
+        version: link:../shared
+      vue:
+        specifier: ^3.4.31
+        version: 3.4.31(typescript@5.5.3)
+
   packages/shared: {}
 
 packages:
