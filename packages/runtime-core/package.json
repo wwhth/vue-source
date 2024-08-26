@@ -1,7 +1,7 @@
 {
-  "name": "@vue/runtime-dom",
+  "name": "@vue/runtime-core",
   "version": "0.0.0",
-  "module": "dist/runtime-dom.esm-bundler.js",
+  "module": "dist/runtime-core.esm-bundler.js",
   "main": "index.ts",
   "unpkg": "dist/runtime-dom.global.js",
   "buildOptions": {
@@ -14,7 +14,7 @@
     ]
   },
   "dependencies": {
-    "@vue/runtime-core": "workspace:*",
+    "@vue/reactivity": "workspace:*",
     "@vue/shared": "workspace:*"
   }
 }
