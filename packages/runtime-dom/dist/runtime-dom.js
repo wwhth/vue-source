@@ -115,7 +115,8 @@ function createRenderer(options) {
     }
   };
   const mountElement = (vnode, container) => {
-    const { type, children, props, shapFlag } = vnode;
+    console.log("\u{1F680} ~ mountElement ~ vnode:", vnode);
+    const { type, children, props, shapeFlag } = vnode;
     let el = hostCreateElement(type);
     if (props) {
       for (const key in props) {
@@ -123,9 +124,10 @@ function createRenderer(options) {
         hostPatchProp(el, key, null, val);
       }
     }
-    if (shapFlag & 8 /* TEXT_CHILDREN */) {
+    debugger;
+    if (shapeFlag & 8 /* TEXT_CHILDREN */) {
       hostSetElementText(el, children);
-    } else if (shapFlag & 16 /* ARRAY_CHILDREN */) {
+    } else if (shapeFlag & 16 /* ARRAY_CHILDREN */) {
       mountChildren(children, el);
     }
     hostInsert(el, container);

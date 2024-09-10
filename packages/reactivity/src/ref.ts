@@ -18,7 +18,6 @@ class RefImpl {
     this._value = toReactive(rawValue); // 将原始值转换为响应式对象
   }
   get value() {
-    console.log("this: ", this);
     trackRefValue(this);
     return this._value;
   }
@@ -32,7 +31,6 @@ class RefImpl {
 }
 export function trackRefValue(ref) {
   if (activeEffect) {
-    console.log("ref.dep: ", ref.dep);
     trackEffect(
       activeEffect,
       (ref.dep = ref.dep.size
