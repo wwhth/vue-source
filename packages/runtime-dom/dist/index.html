@@ -1,3 +1,11 @@
+<!--
+ * @Author: wwhth zhangyunzhi@vrvmail.com.cn
+ * @Date: 2024-08-23 11:24:03
+ * @LastEditors: wwhth zhangyunzhi@vrvmail.com.cn
+ * @LastEditTime: 2024-08-26 15:52:46
+ * @FilePath: /vue-source/packages/runtime-dom/dist/index.html
+ * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
+-->
 <!DOCTYPE html>
 <html lang="en">
   <head>
@@ -10,14 +18,25 @@
     <div id="app"></div>
     <script type="module">
       import {
-        createRenderer,
-        render,
+        // createRenderer,
+        // render,
         h,
       } from "/node_modules/@vue/runtime-dom/dist/runtime-dom.esm-browser.js";
-
+      import { render } from "./runtime-dom.js";
       // 1.createRenderer 可以自己创建渲染器  （让我们自己提供渲染方式）
       // 2.render 用内置的渲染器来渲染 （直接用来渲染dom）
       // 3.h函数用来创建dom元素 有三个参数(type,propsOrchildren, children)
+      // 1) 参数可能有一个（类型），也可能是两个（类型，属性/儿子），3个（类型，属性，儿子），三个以上的参数（类型，属性，儿子，儿子，。。。。） 从第三个往后都是儿子
+
+      // h(类型，属性，儿子)
+      // h(类型，儿子)
+
+      // 1.两个参数 第二个参数可能是属性，或者虚拟节点（h()） (__v_isVnode 来判断是否是虚拟节点)
+      // 2.第二个参数是数组 -> 儿子
+      // 3.其他情况就是属性
+      // 4.直接传递非对象，文本
+      // 5.不能出现三个参数的时候第二个不是属性
+      // 6.超过是哪个
       let vnode = h("div", { id: "root" }, [
         h("h1", { class: "title" }, "hello world"),
         h("p", "hello vue3"),

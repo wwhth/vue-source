@@ -10,17 +10,17 @@ importers:
     dependencies:
       vue:
         specifier: ^3.4.31
-        version: 3.4.31(typescript@5.5.3)
+        version: 3.4.38(typescript@5.5.4)
     devDependencies:
       esbuild:
         specifier: ^0.23.0
-        version: 0.23.0
+        version: 0.23.1
       minimist:
         specifier: ^1.2.8
         version: 1.2.8
       typescript:
         specifier: ^5.5.3
-        version: 5.5.3
+        version: 5.5.4
 
   packages/reactivity:
     dependencies:
@@ -29,7 +29,25 @@ importers:
         version: link:../shared
       vue:
         specifier: ^3.4.31
-        version: 3.4.31(typescript@5.5.3)
+        version: 3.4.38(typescript@5.5.4)
+
+  packages/runtime-core:
+    dependencies:
+      '@vue/reactivity':
+        specifier: workspace:*
+        version: link:../reactivity
+      '@vue/shared':
+        specifier: workspace:*
+        version: link:../shared
+
+  packages/runtime-dom:
+    dependencies:
+      '@vue/runtime-core':
+        specifier: workspace:*
+        version: link:../runtime-core
+      '@vue/shared':
+        specifier: workspace:*
+        version: link:../shared
 
   packages/runtime-dom:
     dependencies:
