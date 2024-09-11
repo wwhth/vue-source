@@ -95,6 +95,59 @@ function patchProp(el, key, prevValue, nextValue) {
   }
 }
 
+// packages/shared/src/index.ts
+function isObject(val) {
+  return val !== null && typeof val === "object";
+}
+
+// packages/runtime-core/src/h.ts
+function h(type, propsOrChildren, children) {
+  let l = arguments.length;
+  if (l === 2) {
+    if (isObject(propsOrChildren) && !Array.isArray(propsOrChildren)) {
+      if (isVNode(propsOrChildren)) {
+        return createVNode(type, null, [propsOrChildren]);
+      } else {
+        return createVNode(type, propsOrChildren);
+      }
+    }
+    return createVNode(type, null, propsOrChildren);
+  } else {
+    if (l > 3) {
+      children = Array.from(arguments).slice(2);
+    } else if (l === 3 && isVNode(children)) {
+      children = [children];
+    }
+    return createVNode(type, propsOrChildren, children);
+  }
+}
+function isVNode(v) {
+  return v.__v_isVNode === true;
+}
+var getShapeFlag = (type) => {
+  return typeof type === "string" ? 1 /* ELEMENT */ : 4 /* STATEFUL_COMPONENT */;
+};
+function createVNode(type, props, children) {
+  const vNode = {
+    __v_isVNode: true,
+    type,
+    props,
+    children,
+    key: props?.key,
+    // key是用于diff算法的
+    shapeFlag: getShapeFlag(type),
+    // 虚拟节点的类型
+    el: null
+    // 虚拟节点对应的真实节点
+  };
+  if (Array.isArray(children)) {
+    vNode.shapeFlag |= 16 /* ARRAY_CHILDREN */;
+  } else if (typeof children === "string") {
+    vNode.shapeFlag |= 8 /* TEXT_CHILDREN */;
+  }
+  return vNode;
+}
+
 // packages/runtime-core/src/index.ts
 function createRenderer(options) {
   const {
@@ -156,6 +209,9 @@ var render = (vnode, container) => {
 };
 export {
   createRenderer,
+  createVNode,
+  h,
+  isVNode,
   render,
   renderOptions
 };

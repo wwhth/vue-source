@@ -9,63 +9,62 @@
 import { ShapeFlags } from "@vue/shared";
 
 export function createRenderer(options) {
-    // core中不关心如何渲染
-    const {
-        insert: hostInsert,
-        remove: hostRemove,
-        createElement: hostCreateElement,
-        createText: hostCreateText,
-        setText: hostSetText,
-        setElementText: hostSetElementText,
-        parentNode: hostParentNode,
-        nextSibling: hostNextSibling,
-        patchProp: hostPatchProp
-    } = options;
-    const mountChildren = (children, container) => {
-        
-        for (let i = 0; i < children.length; i++) {
-            const child = children[i]
-            patch(null, child, container)
-        }
+  // core中不关心如何渲染
+  const {
+    insert: hostInsert,
+    remove: hostRemove,
+    createElement: hostCreateElement,
+    createText: hostCreateText,
+    setText: hostSetText,
+    setElementText: hostSetElementText,
+    parentNode: hostParentNode,
+    nextSibling: hostNextSibling,
+    patchProp: hostPatchProp,
+  } = options;
+  const mountChildren = (children, container) => {
+    for (let i = 0; i < children.length; i++) {
+      const child = children[i];
+      patch(null, child, container);
     }
-    const mountElement = (vnode, container) => {
-        console.log("🚀 ~ mountElement ~ vnode:", vnode)
-        const { type, children, props, shapeFlag } = vnode
-        let el = hostCreateElement(type)
-        if (props) {
-            for (const key in props) {
-                const val = props[key]
-                hostPatchProp(el, key, null, val)
-            }
-        }
-        debugger
-        // 9 & 8 > 0 说明children是文本节点
-        if (shapeFlag & ShapeFlags.TEXT_CHILDREN) {
-            hostSetElementText(el, children)
-        } else if (shapeFlag & ShapeFlags.ARRAY_CHILDREN) {            
-            mountChildren(children, el)
-        }
-        hostInsert(el, container)
+  };
+  const mountElement = (vnode, container) => {
+    console.log("🚀 ~ mountElement ~ vnode:", vnode);
+    const { type, children, props, shapeFlag } = vnode;
+    let el = hostCreateElement(type);
+    if (props) {
+      for (const key in props) {
+        const val = props[key];
+        hostPatchProp(el, key, null, val);
+      }
     }
-    const patch = (n1, n2, container) => {
-        if (n1 == n2) {
-            return
-        }
-        if (n1 === null) {
-            // 初始化操作
-            mountElement(n2, container)
-        }
+    debugger;
+    // 9 & 8 > 0 说明children是文本节点
+    if (shapeFlag & ShapeFlags.TEXT_CHILDREN) {
+      hostSetElementText(el, children);
+    } else if (shapeFlag & ShapeFlags.ARRAY_CHILDREN) {
+      mountChildren(children, el);
     }
-    // 多次调用render会进行虚拟节点的比较，在进行更新
+    hostInsert(el, container);
+  };
+  const patch = (n1, n2, container) => {
+    if (n1 == n2) {
+      return;
+    }
+    if (n1 === null) {
+      // 初始化操作
+      mountElement(n2, container);
+    }
+  };
+  // 多次调用render会进行虚拟节点的比较，在进行更新
 
-    const render = (vnode, container) => {
-        // 将虚拟节点变成真实节点进行渲染
-        patch(container._vnode || null, vnode, container)
+  const render = (vnode, container) => {
+    // 将虚拟节点变成真实节点进行渲染
+    patch(container._vnode || null, vnode, container);
 
-        container._vnode = vnode
-    }
-    return {
-        render
-    }
+    container._vnode = vnode;
+  };
+  return {
+    render,
+  };
 }
-export default {}
+export * from "./h";

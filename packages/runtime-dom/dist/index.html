@@ -17,12 +17,13 @@
   <body>
     <div id="app"></div>
     <script type="module">
-      import {
-        // createRenderer,
-        // render,
-        h,
-      } from "/node_modules/@vue/runtime-dom/dist/runtime-dom.esm-browser.js";
-      import { render } from "./runtime-dom.js";
+      // import {
+      //   // createRenderer,
+      //   // render,
+      //   // h,
+      // } from "/node_modules/@vue/runtime-dom/dist/runtime-dom.esm-browser.js";
+      import { render, h } from "./runtime-dom.js";
+      console.log("🚀 ~ h:", h);
       // 1.createRenderer 可以自己创建渲染器  （让我们自己提供渲染方式）
       // 2.render 用内置的渲染器来渲染 （直接用来渲染dom）
       // 3.h函数用来创建dom元素 有三个参数(type,propsOrchildren, children)
