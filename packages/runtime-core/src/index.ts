@@ -65,7 +65,62 @@ export function createRenderer(options) {
     patchProps(el, oldProps, newProps);
     patchChildren(n1, n2, el);
   };
-  const patchChildren = (n1, n2, container) => {};
+  const patchChildren = (n1, n2, container) => {
+    const c1 = n1.children;
+    const c2 = n2.children;
+    const oldShapeFlag = n1.shapeFlag;
+    const newShapeFlag = n2.shapeFlag;
+    if (newShapeFlag & ShapeFlags.TEXT_CHILDREN) {
+      if (oldShapeFlag & ShapeFlags.ARRAY_CHILDREN) {
+        unmountChildren(c1);
+      }
+      if (c1 !== c2) {
+        hostSetElementText(container, c2);
+      }
+    } else {
+      // 新的是数组
+      if (oldShapeFlag & ShapeFlags.ARRAY_CHILDREN) {
+        // 老的是数组
+        if (newShapeFlag & ShapeFlags.ARRAY_CHILDREN) {
+          // 全量diff  两个数组的比对
+          patchKeyedChildren(c1, c2, container);
+        } else {
+          // 新的是文本
+          unmountChildren(c1);
+          hostSetElementText(container, c2);
+        }
+      } else {
+        // 老的是文本  新的是空
+        if (oldShapeFlag & ShapeFlags.TEXT_CHILDREN) {
+          hostSetElementText(container, "");
+        }
+        // 新的是数组
+        if (newShapeFlag & ShapeFlags.ARRAY_CHILDREN) {
+          mountChildren(c2, container);
+        }
+      }
+    }
+  };
+  const patchKeyedChildren = (c1, c2, container) => {
+    let i = 0;
+    let e1 = c1.length - 1;
+    let e2 = c2.length - 1;
+    // 1.从头开始遍历
+    while (i <= e1 && i <= e2) {
+      const n1 = c1[i]; // 老节点
+      const n2 = c2[i]; // 新节点
+      if (isSameVnode(n1, n2)) {
+        patch(n1, n2, container);
+      } else {
+        break;
+      }
+    }
+  };
+  const unmountChildren = (children) => {
+    for (let i = 0; i < children.length; i++) {
+      unmount(children[i]);
+    }
+  };
   const patchProps = (el, oldProps, newProps) => {
     for (const key in newProps) {
       const prevProp = oldProps[key];
