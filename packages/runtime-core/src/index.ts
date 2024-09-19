@@ -72,9 +72,11 @@ export function createRenderer(options) {
     const newShapeFlag = n2.shapeFlag;
     if (newShapeFlag & ShapeFlags.TEXT_CHILDREN) {
       if (oldShapeFlag & ShapeFlags.ARRAY_CHILDREN) {
+        // 老的是数组，新的是文本
         unmountChildren(c1);
       }
       if (c1 !== c2) {
+        //  都是文本节点
         hostSetElementText(container, c2);
       }
     } else {
