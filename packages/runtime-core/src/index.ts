@@ -28,7 +28,7 @@ export function createRenderer(options) {
       patch(null, child, container);
     }
   };
-  const mountElement = (vnode, container) => {
+  const mountElement = (vnode, container, anchor) => {
     console.log("🚀 ~ mountElement ~ vnode:", vnode);
     const { type, children, props, shapeFlag } = vnode;
     // 第一次渲染的时候我们需要让虚拟节点和真实节点关联起来 vNode.el = el
@@ -46,12 +46,12 @@ export function createRenderer(options) {
     } else if (shapeFlag & ShapeFlags.ARRAY_CHILDREN) {
       mountChildren(children, el);
     }
-    hostInsert(el, container);
+    hostInsert(el, container, anchor);
   };
-  const processElement = (n1, n2, container) => {
+  const processElement = (n1, n2, container, anchor) => {
     if (n1 === null) {
       // 初始化操作
-      mountElement(n2, container);
+      mountElement(n2, container, anchor);
     } else {
       patchElement(n1, n2, container);
     }
@@ -140,7 +140,7 @@ export function createRenderer(options) {
     if (i > e1) {
       // 3.1 如果新节点比老节点多，那么新增
       if (i <= e2) {
-        const nextPos = e2 + 1;
+        const nextPos = e2 + 1; // 新节点的下一个位置
         const anchor = nextPos < c2.length ? c2[nextPos].el : null;
         while (i <= e2) {
           patch(null, c2[i], container, anchor);
@@ -158,11 +158,76 @@ export function createRenderer(options) {
       // 3.3.1 需要一个map来存储老节点的key和索引的关系
       const s1 = i;
       const s2 = i;
-      const keyToNewIndexMap = new Map();
+      const keyToNewIndexMap = new Map(); //做一个映射表用户快速查找，看老的是否在新的里面还有，没有就删除，有就更新
       for (let i = s2; i <= e2; i++) {
         const nextChild = c2[i];
         keyToNewIndexMap.set(nextChild.key, i); // 存储新节点的key和索引的关系
       }
+      // let patched = 0;
+      // let moved = false;
+      let maxNewIndexSoFar = 0;
+      const toBePatched = e2 - s2 + 1; // 新节点需要比对的个数
+      const newIndexToOldIndexMap = new Array(toBePatched).fill(0); // 新节点和旧节点的映射表
+      for (let i = s1; i <= e1; i++) {
+        const prevChild = c1[i];
+        // if (patched >= toBePatched) {
+        //   // 如果已经比对完，那么剩下的就是删除
+        //   unmount(prevChild);
+        //   continue;
+        // }
+        let newIndex = keyToNewIndexMap.get(prevChild.key);
+        if (newIndex === undefined) {
+          // 如果没有找到，那么就是删除
+          unmount(prevChild);
+        } else {
+          patch(prevChild, c2[newIndex], container);
+        }
+        // 调整顺序
+        //  我们可以按照新的队列，倒序插入insertBefore 通过参照物，插入到参照物的前面
+
+        // 插入的过程中，可能新的元素多，需要创建
+        for (let i = toBePatched - 1; i >= 0; i--) {
+          const nextIndex = i + s2;
+          const nextChild = c2[nextIndex];
+          const anchor =
+            nextIndex + 1 < c2.length ? c2[nextIndex + 1].el : null;
+          if (!nextChild.el) {
+            patch(null, nextChild, container, anchor);
+          } else {
+            hostInsert(nextChild.el, container, anchor);
+          }
+          // if (newIndexToOldIndexMap[i] === 0) {
+          //   // 如果是0，说明没有移动过
+          //   patch(null, nextChild, container, anchor);
+          //   newIndexToOldIndexMap[i] = i + 1;
+          // } else {
+          //   // 如果不是0，说明移动过，需要调整顺序
+          //   const curIndex = newIndexToOldIndexMap[i] - 1;
+          //   if (curIndex < maxNewIndexSoFar) {
+          //     // 如果当前索引小于最大索引，说明需要移动
+          //     patch(prevChild, nextChild, container, anchor);
+          //     newIndexToOldIndexMap[i] = i + 1;
+          //   } else {
+          //     maxNewIndexSoFar = curIndex;
+          //   }
+          // }
+        }
+        // if (prevChild.key != null) {
+        //   newIndex = keyToNewIndexMap.get(prevChild.key);
+        // } else {
+        //   for (let j = s2; j <= e2; j++) {
+        //     if (isSameVnode(prevChild, c2[j])) {
+        //       newIndex = j;
+        //       break;
+        //     }
+        //   }
+        // }
+      }
+      // if (newIndexToOldIndexMap.every((i) => i === 0)) {
+      //   // 没有移动
+      //   unmountChildren(c1.slice(s1, e1 + 1));
+      //   mountChildren(c2.slice(s2, e2 + 1), container);
+      // }
     }
   };
   const unmountChildren = (children) => {
@@ -193,7 +258,7 @@ export function createRenderer(options) {
       unmount(n1);
       n1 = null; // 卸载完成之后，n1就为null了 ,会执行n2的初始化操作
     }
-    processElement(n1, n2, container);
+    processElement(n1, n2, container, anchor);
   };
 
   function unmount(vnode) {

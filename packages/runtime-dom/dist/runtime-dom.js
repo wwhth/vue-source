@@ -172,7 +172,7 @@ function createRenderer(options) {
       patch(null, child, container);
     }
   };
-  const mountElement = (vnode, container) => {
+  const mountElement = (vnode, container, anchor) => {
     console.log("\u{1F680} ~ mountElement ~ vnode:", vnode);
     const { type, children, props, shapeFlag } = vnode;
     let el = vnode.el = hostCreateElement(type);
@@ -187,11 +187,11 @@ function createRenderer(options) {
     } else if (shapeFlag & 16 /* ARRAY_CHILDREN */) {
       mountChildren(children, el);
     }
-    hostInsert(el, container);
+    hostInsert(el, container, anchor);
   };
-  const processElement = (n1, n2, container) => {
+  const processElement = (n1, n2, container, anchor) => {
     if (n1 === null) {
-      mountElement(n2, container);
+      mountElement(n2, container, anchor);
     } else {
       patchElement(n1, n2, container);
     }
@@ -280,6 +280,28 @@ function createRenderer(options) {
         const nextChild = c2[i2];
         keyToNewIndexMap.set(nextChild.key, i2);
       }
+      let maxNewIndexSoFar = 0;
+      const toBePatched = e2 - s2 + 1;
+      const newIndexToOldIndexMap = new Array(toBePatched).fill(0);
+      for (let i2 = s1; i2 <= e1; i2++) {
+        const prevChild = c1[i2];
+        let newIndex = keyToNewIndexMap.get(prevChild.key);
+        if (newIndex === void 0) {
+          unmount(prevChild);
+        } else {
+          patch(prevChild, c2[newIndex], container);
+        }
+        for (let i3 = toBePatched - 1; i3 >= 0; i3--) {
+          const nextIndex = i3 + s2;
+          const nextChild = c2[nextIndex];
+          const anchor = nextIndex + 1 < c2.length ? c2[nextIndex + 1].el : null;
+          if (!nextChild.el) {
+            patch(null, nextChild, container, anchor);
+          } else {
+            hostInsert(nextChild.el, container, anchor);
+          }
+        }
+      }
     }
   };
   const unmountChildren = (children) => {
@@ -309,7 +331,7 @@ function createRenderer(options) {
       unmount(n1);
       n1 = null;
     }
-    processElement(n1, n2, container);
+    processElement(n1, n2, container, anchor);
   };
   function unmount(vnode) {
     return hostRemove(vnode.el);

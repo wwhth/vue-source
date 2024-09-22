@@ -23,7 +23,6 @@
       //   // h,
       // } from "/node_modules/@vue/runtime-dom/dist/runtime-dom.esm-browser.js";
       import { render, h } from "./runtime-dom.js";
-      console.log("🚀 ~ h:", h);
       // 1.createRenderer 可以自己创建渲染器  （让我们自己提供渲染方式）
       // 2.render 用内置的渲染器来渲染 （直接用来渲染dom）
       // 3.h函数用来创建dom元素 有三个参数(type,propsOrchildren, children)
@@ -39,12 +38,27 @@
       // 5.不能出现三个参数的时候第二个不是属性
       // 6.超过三个参数的时候，第一个是类型，第二个是属性，第三个往后都是儿子
 
-      let vnode = h("div", { id: "root" }, [
-        h("h1", { class: "title" }, "hello world"),
-        h("p", "hello vue3"),
+      // let vnode = h("div", { id: "root" }, [
+      //   h("h1", { class: "title" }, "hello world"),
+      //   h("p", "hello vue3"),
+      // ]);
+      // console.log("🚀 ~ createRenderer:", vnode);
+      // render(vnode, app);
+      let vnode1 = h("h1", [
+        h("div", { key: "a" }, "a"),
+        h("div", { key: "c" }, "c"),
+        h("div", { key: "b" }, "b"),
       ]);
-      console.log("🚀 ~ createRenderer:", vnode);
-      render(vnode, app);
+      let vnode2 = h("h1", [
+        h("div", { key: "b" }, "b"),
+        h("div", { key: "d" }, "d"),
+        h("div", { key: "e" }, "e"),
+        h("div", { key: "a" }, "a"),
+      ]);
+      render(vnode1, app);
+      setTimeout(() => {
+        render(vnode2, app);
+      }, 2000);
     </script>
   </body>
 </html>
