@@ -104,17 +104,64 @@ export function createRenderer(options) {
     }
   };
   const patchKeyedChildren = (c1, c2, container) => {
+    // 1.减少比对范围，先比开头和结尾，确定不一样的范围
+    // 2.中间部分不同的操作（新增删除）即可
+    // 开始比对的索引
     let i = 0;
+    // 第一个结束比对的索引
     let e1 = c1.length - 1;
+    // 第二个结束比对的索引
     let e2 = c2.length - 1;
     // 1.从头开始遍历
     while (i <= e1 && i <= e2) {
+      // 有任何一个不相等，就跳出循环
       const n1 = c1[i]; // 老节点
       const n2 = c2[i]; // 新节点
+      if (isSameVnode(n1, n2)) {
+        patch(n1, n2, container); // 更新当前节点的属性和儿子 （递归比较子节点）
+      } else {
+        break;
+      }
+      i++;
+    }
+    // 2.从尾部开始遍历
+    while (i <= e1 && i <= e2) {
+      const n1 = c1[e1];
+      const n2 = c2[e2];
       if (isSameVnode(n1, n2)) {
         patch(n1, n2, container);
       } else {
         break;
+      }
+      e1--;
+      e2--;
+    }
+    // 3.比开头和结尾之后，中间部分的处理
+    if (i > e1) {
+      // 3.1 如果新节点比老节点多，那么新增
+      if (i <= e2) {
+        const nextPos = e2 + 1;
+        const anchor = nextPos < c2.length ? c2[nextPos].el : null;
+        while (i <= e2) {
+          patch(null, c2[i], container, anchor);
+          i++;
+        }
+      }
+    } else if (i > e2) {
+      // 3.2 如果老节点比新节点多，那么删除
+      while (i <= e1) {
+        unmount(c1[i]);
+        i++;
+      }
+    } else {
+      // 3.3 中间部分的处理
+      // 3.3.1 需要一个map来存储老节点的key和索引的关系
+      const s1 = i;
+      const s2 = i;
+      const keyToNewIndexMap = new Map();
+      for (let i = s2; i <= e2; i++) {
+        const nextChild = c2[i];
+        keyToNewIndexMap.set(nextChild.key, i); // 存储新节点的key和索引的关系
       }
     }
   };
@@ -137,7 +184,7 @@ export function createRenderer(options) {
       }
     }
   };
-  const patch = (n1, n2, container) => {
+  const patch = (n1, n2, container, anchor = null) => {
     if (n1 == n2) {
       return;
     }
