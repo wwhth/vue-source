@@ -130,6 +130,7 @@ var getShapeFlag = (type) => {
   return typeof type === "string" ? 1 /* ELEMENT */ : 4 /* STATEFUL_COMPONENT */;
 };
 function isSameVnode(n1, n2) {
+  console.log("\u{1F680} ~ isSameVnode ~ n1, n2:", n1, n2);
   return n1.type === n2.type && n1.key === n2.key;
 }
 function createVNode(type, props, children) {
@@ -173,7 +174,6 @@ function createRenderer(options) {
     }
   };
   const mountElement = (vnode, container, anchor) => {
-    console.log("\u{1F680} ~ mountElement ~ vnode:", vnode);
     const { type, children, props, shapeFlag } = vnode;
     let el = vnode.el = hostCreateElement(type);
     if (props) {
@@ -273,24 +273,29 @@ function createRenderer(options) {
         i++;
       }
     } else {
+      console.log(3333);
       const s1 = i;
       const s2 = i;
       const keyToNewIndexMap = /* @__PURE__ */ new Map();
+      const toBePatched = e2 - s2 + 1;
+      let maxNewIndexSoFar = 0;
+      const newIndexToOldIndexMap = new Array(toBePatched).fill(0);
       for (let i2 = s2; i2 <= e2; i2++) {
         const nextChild = c2[i2];
         keyToNewIndexMap.set(nextChild.key, i2);
       }
-      let maxNewIndexSoFar = 0;
-      const toBePatched = e2 - s2 + 1;
-      const newIndexToOldIndexMap = new Array(toBePatched).fill(0);
       for (let i2 = s1; i2 <= e1; i2++) {
         const prevChild = c1[i2];
         let newIndex = keyToNewIndexMap.get(prevChild.key);
         if (newIndex === void 0) {
+          console.log(1111);
           unmount(prevChild);
         } else {
+          console.log(2222);
+          newIndexToOldIndexMap[newIndex - s2] = i2 + 1;
           patch(prevChild, c2[newIndex], container);
         }
+        console.log("\u{1F680} ~ patchKeyedChildren ~ newIndexToOldIndexMap:", newIndexToOldIndexMap);
         for (let i3 = toBePatched - 1; i3 >= 0; i3--) {
           const nextIndex = i3 + s2;
           const nextChild = c2[nextIndex];
@@ -324,10 +329,11 @@ function createRenderer(options) {
     }
   };
   const patch = (n1, n2, container, anchor = null) => {
+    console.log("\u{1F680} ~ patch ~ n1, n2:", n1, n2);
     if (n1 == n2) {
       return;
     }
-    if (n1 && isSameVnode(n1, n2)) {
+    if (n1 && !isSameVnode(n1, n2)) {
       unmount(n1);
       n1 = null;
     }
@@ -343,6 +349,7 @@ function createRenderer(options) {
       }
     }
     patch(container._vnode || null, vnode, container);
+    console.log("\u{1F680} ~ render ~ container:", container?._vnode);
     container._vnode = vnode;
   };
   return {
