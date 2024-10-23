@@ -286,7 +286,6 @@ export function createRenderer(options) {
     // 将虚拟节点变成真实节点进行渲染
     patch(container._vnode || null, vnode, container);
     console.log("🚀 ~ render ~ container:", container?._vnode)
-
     container._vnode = vnode;
   };
   return {

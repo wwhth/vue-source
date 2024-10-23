@@ -8,7 +8,7 @@
 		"name": "VueReactivity",
 		"formats": [
 			"esm-bundler",
-			"esm-browser",
+			"esm-browser", 
 			"cjs",
 			"global"
 		]
@@ -16,5 +16,5 @@
 	"dependencies": {
 		"@vue/shared": "workspace:*",
 		"vue": "^3.4.31"
-	}
+	}    
 }
