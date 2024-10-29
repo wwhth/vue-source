@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+  </head>
+
+  <body>
+    <div id="app"></div>
+    <script type="module">
+      // import { ref, watch } from "/node_modules/vue/dist/vue.esm-browser.js";
+      import {
+        reactive,
+        effect,
+        ref,
+        toRefs,
+        proxyRefs,
+        computed,
+        watch,
+        watchEffect,
+      } from "./reactivity.js";
+  
+    debugger
+    //   测试ref reactive
+    const value = ref('name1')
+    effect(() => {
+        debugger
+        value.value = "name2"
+        
+    })
+    setTimeout(() => {
+        value.value ='name3'
+        app.innerHTML = value.value
+    },1000)
+    </script>
+  </body>
+</html>
