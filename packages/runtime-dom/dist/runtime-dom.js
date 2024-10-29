@@ -295,8 +295,12 @@ function createRenderer(options) {
           newIndexToOldIndexMap[newIndex - s2] = i2 + 1;
           patch(prevChild, c2[newIndex], container);
         }
-        console.log("\u{1F680} ~ patchKeyedChildren ~ newIndexToOldIndexMap:", newIndexToOldIndexMap);
+        console.log(
+          "\u{1F680} ~ patchKeyedChildren ~ newIndexToOldIndexMap:",
+          newIndexToOldIndexMap
+        );
         for (let i3 = toBePatched - 1; i3 >= 0; i3--) {
+          console.log("\u{1F680} ~ patchKeyedChildren ~ i:", i3);
           const nextIndex = i3 + s2;
           const nextChild = c2[nextIndex];
           const anchor = nextIndex + 1 < c2.length ? c2[nextIndex + 1].el : null;

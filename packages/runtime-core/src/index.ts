@@ -29,7 +29,6 @@ export function createRenderer(options) {
     }
   };
   const mountElement = (vnode, container, anchor) => {
-    
     const { type, children, props, shapeFlag } = vnode;
     // 第一次渲染的时候我们需要让虚拟节点和真实节点关联起来 vNode.el = el
     // 第二次渲染新的vnode，可以和上一次的vnode作比对，之后在更新对应的el元素，可以后续再服用这个dom元素
@@ -50,7 +49,6 @@ export function createRenderer(options) {
   };
   const processElement = (n1, n2, container, anchor) => {
     if (n1 === null) {
-
       // 初始化操作
       mountElement(n2, container, anchor);
     } else {
@@ -155,7 +153,7 @@ export function createRenderer(options) {
         i++;
       }
     } else {
-      console.log(3333)
+      console.log(3333);
       // 3.3 中间部分的处理
       // 3.3.1 需要一个map来存储老节点的key和索引的关系
       const s1 = i;
@@ -163,8 +161,8 @@ export function createRenderer(options) {
       const keyToNewIndexMap = new Map(); //做一个映射表用户快速查找，看老的是否在新的里面还有，没有就删除，有就更新
       const toBePatched = e2 - s2 + 1; // 新节点需要比对的个数  要倒序插入的个数
       let maxNewIndexSoFar = 0;
-      const newIndexToOldIndexMap = new Array(toBePatched).fill(0); // 新节点和旧节点的映射表 [0,0,0,0]
-
+      const newIndexToOldIndexMap = new Array(toBePatched).fill(0); // 新节点和旧节点的映射表 新的索引去映射老的索引 [0,0,0,0]
+      // 根据最长递增子序列求出对应的‘索引结果’
       // 根据新的节点，找到对应老的位置
 
       for (let i = s2; i <= e2; i++) {
@@ -182,20 +180,24 @@ export function createRenderer(options) {
         // }
         let newIndex = keyToNewIndexMap.get(prevChild.key);
         if (newIndex === undefined) {
-          console.log(1111)
+          console.log(1111);
           // 如果没有找到，那么就是删除
           unmount(prevChild);
         } else {
-          console.log(2222)
-          newIndexToOldIndexMap[newIndex - s2] = i + 1; 
+          console.log(2222);
+          newIndexToOldIndexMap[newIndex - s2] = i + 1;
           patch(prevChild, c2[newIndex], container);
         }
-        console.log("🚀 ~ patchKeyedChildren ~ newIndexToOldIndexMap:", newIndexToOldIndexMap)
+        console.log(
+          "🚀 ~ patchKeyedChildren ~ newIndexToOldIndexMap:",
+          newIndexToOldIndexMap
+        );
         // 调整顺序
         //  我们可以按照新的队列，倒序插入insertBefore 通过参照物，插入到参照物的前面
 
         // 插入的过程中，可能新的元素多，需要创建
         for (let i = toBePatched - 1; i >= 0; i--) {
+          console.log("🚀 ~ patchKeyedChildren ~ i:", i);
           const nextIndex = i + s2;
           const nextChild = c2[nextIndex];
           const anchor =
@@ -259,7 +261,7 @@ export function createRenderer(options) {
     }
   };
   const patch = (n1, n2, container, anchor = null) => {
-    console.log("🚀 ~ patch ~ n1, n2:", n1, n2)
+    console.log("🚀 ~ patch ~ n1, n2:", n1, n2);
     if (n1 == n2) {
       return;
     }
@@ -285,7 +287,7 @@ export function createRenderer(options) {
     }
     // 将虚拟节点变成真实节点进行渲染
     patch(container._vnode || null, vnode, container);
-    console.log("🚀 ~ render ~ container:", container?._vnode)
+    console.log("🚀 ~ render ~ container:", container?._vnode);
 
     container._vnode = vnode;
   };
