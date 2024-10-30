@@ -185,6 +185,8 @@ export function createRenderer(options) {
           unmount(prevChild);
         } else {
           console.log(2222);
+          // 比较前后节点的差异，更新属性和儿子
+          // 我们i 可能会存在是0的情况，为了保证0是没有比对过的元素，所以需要+1
           newIndexToOldIndexMap[newIndex - s2] = i + 1;
           patch(prevChild, c2[newIndex], container);
         }
