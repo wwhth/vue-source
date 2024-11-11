@@ -1,6 +1,7 @@
 // 最长递增子序列
 // [1, 2, 3, 5, 4, 9, 7, 8, 6]
 const getSequences = (arr) => {
+	debugger
 	const result = [0]
 	let start;
 	let end;
@@ -39,4 +40,4 @@ const getSequences = (arr) => {
 	return result
 }
 
-console.log(getSequences([1, 2, 3, 5, 4, 9, 7, 8, 6]))
+console.log(getSequences([1, 2, 3, 4, 5, 8, 9, 10, 6]))
