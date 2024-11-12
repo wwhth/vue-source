@@ -3,6 +3,7 @@
 const getSequences = (arr) => {
 	debugger
 	const result = [0]
+	const p =result.slice(0)  // 前一个节点的索引
 	let start;
 	let end;
 	let mid;
@@ -13,6 +14,7 @@ const getSequences = (arr) => {
 			// 拿到result中最后一个元素，也就是当前最长递增子序列的最后一个元素，和当前元素比较
 			const last = result[result.length - 1]
 			if (arrI > arr[last]) {
+				p[i] = last   // 正产放入的情况下，前一个节点索引就是result的最后一个
 				console.log("🚀 ~ getSequences ~ arrI:", arrI, arr[last], last)
 				// 如果当前元素比最长递增子序列的最后一个元素大，则将当前元素添加到最长递增子序列中
 				result.push(i)
@@ -30,17 +32,28 @@ const getSequences = (arr) => {
 
 					start = mid + 1
 				} else {
-
 					end = mid
 				}
 			}
 		}
 		if (arrI < arr[result[start]]) {
+			debugger
+			p[i] = result[start - 1]   //找到的那个节点的前一个
 			result[start] = i
+			console.log("🚀 ~ getSequences ~ result:", result)
 		}
+		console.log("🚀 ~ getSequences ~ p:", p)
+	}
+	// p为前驱节点的列表，需要根据最后一个字节做追溯
+
+	let l = result.length 
+	let last = result[l - 1]
+	while (l-- > 0) {
+		result[l] = last
+		last = p[last]  //在数组中找到最后一个
 	}
 	// 需要创建一个 前驱节点，进行倒序追溯 （因为最后一项，肯定是不会错的）
 	return result
 }
-
-console.log(getSequences([1, 2, 3, 4, 5, 8, 9, 10, 6]))
+console.log(getSequences([2,3,1,5,6,8,7,9,4]))
+// console.log(getSequences([1, 2, 3, 4, 5, 8, 9, 10, 6]))
