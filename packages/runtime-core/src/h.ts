@@ -1,6 +1,7 @@
 import { isObject, ShapeFlags } from "@vue/shared"; // h函数用于创建虚拟节点
 
 export function h(type, propsOrChildren?, children?) {
+  debugger
   let l = arguments.length;
   if (l === 2) {
     if (isObject(propsOrChildren) && !Array.isArray(propsOrChildren)) {
@@ -12,7 +13,7 @@ export function h(type, propsOrChildren?, children?) {
     }
     return createVNode(type, null, propsOrChildren);
   } else {
-    if (l > 3) {
+    if (l > 3) {  //TODO 有问题，现在这个写法不支持三个以上的参数
       children = Array.from(arguments).slice(2);
     } else if (l === 3 && isVNode(children)) {
       children = [children];
@@ -35,7 +36,7 @@ export function isSameVnode(n1, n2) {
 }
 export function createVNode(type, props?, children?) {
   const vNode = {
-    __v_isVNode: true,
+    __v_isVNode: true,   // 用于判断是否是虚拟节点
     type,
     props,
     children,

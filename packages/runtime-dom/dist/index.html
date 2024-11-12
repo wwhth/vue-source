@@ -45,12 +45,13 @@
     // ]);
     // console.log("🚀 ~ createRenderer:", vnode);
     // render(vnode, app);
+    debugger
     let vnode1 = h("h1", [
       h("div", { key: "a" }, "a"),
       h("div", { key: "b" }, "b"),
       h("div", { key: "c" }, "c"),
       h("div", { key: "d" }, "d"),
-      h("div", { key: "e"}, "e"),
+      h("div", { key: "e" }, "e"),
       h("div", { key: "f" }, "f"),
     ]);
     let vnode2 = h("h1", [
@@ -58,7 +59,7 @@
       h("div", { key: "d" }, "d"),
       h("div", { key: "c" }, "c"),
       h("div", { key: "b" }, "b"),
-      h("div", { key: "e"}, "e"),
+      h("div", { key: "e" }, "e"),
       h("div", { key: "f" }, "f"),
     ]);
     render(vnode1, app);

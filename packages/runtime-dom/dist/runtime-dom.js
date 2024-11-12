@@ -104,6 +104,7 @@ function isObject(val) {
 
 // packages/runtime-core/src/h.ts
 function h(type, propsOrChildren, children) {
+  debugger;
   let l = arguments.length;
   if (l === 2) {
     if (isObject(propsOrChildren) && !Array.isArray(propsOrChildren)) {
@@ -136,6 +137,7 @@ function isSameVnode(n1, n2) {
 function createVNode(type, props, children) {
   const vNode = {
     __v_isVNode: true,
+    // 用于判断是否是虚拟节点
     type,
     props,
     children,
