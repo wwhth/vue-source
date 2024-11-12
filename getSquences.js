@@ -1,6 +1,7 @@
 // 最长递增子序列
 // [1, 2, 3, 5, 4, 9, 7, 8, 6]
 const getSequences = (arr) => {
+	debugger
 	const result = [0]
 	let start;
 	let end;
@@ -12,7 +13,7 @@ const getSequences = (arr) => {
 			// 拿到result中最后一个元素，也就是当前最长递增子序列的最后一个元素，和当前元素比较
 			const last = result[result.length - 1]
 			if (arrI > arr[last]) {
-				console.log("🚀 ~ getSequences ~ arrI:",arrI,arr[last],last)
+				console.log("🚀 ~ getSequences ~ arrI:", arrI, arr[last], last)
 				// 如果当前元素比最长递增子序列的最后一个元素大，则将当前元素添加到最长递增子序列中
 				result.push(i)
 				console.log("🚀 ~ getSequences ~ result:", result)
@@ -42,4 +43,4 @@ const getSequences = (arr) => {
 	return result
 }
 
-console.log(getSequences([1, 2, 3, 5, 4, 9, 7, 8, 6]))
+console.log(getSequences([1, 2, 3, 4, 5, 8, 9, 10, 6]))
