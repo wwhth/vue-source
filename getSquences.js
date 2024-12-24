@@ -3,7 +3,7 @@
 const getSequences = (arr) => {
 	debugger
 	const result = [0]
-	const p =result.slice(0)  // 前一个节点的索引
+	const p = result.slice(0)  // 前一个节点的索引
 	let start;
 	let end;
 	let mid;
@@ -46,7 +46,7 @@ const getSequences = (arr) => {
 	}
 	// p为前驱节点的列表，需要根据最后一个字节做追溯
 
-	let l = result.length 
+	let l = result.length
 	let last = result[l - 1]
 	while (l-- > 0) {
 		result[l] = last
@@ -55,5 +55,5 @@ const getSequences = (arr) => {
 	// 需要创建一个 前驱节点，进行倒序追溯 （因为最后一项，肯定是不会错的）
 	return result
 }
-console.log(getSequences([2,3,1,5,6,8,7,9,4]))
+console.log(getSequences([2, 3, 1, 5, 6, 8, 7, 9, 4]))
 // console.log(getSequences([1, 2, 3, 4, 5, 8, 9, 10, 6]))

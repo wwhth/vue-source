@@ -139,7 +139,7 @@ export function createRenderer(options) {
     if (i > e1) {
       // 3.1 如果新节点比老节点多，那么新增
       if (i <= e2) {
-        const nextPos = e2 + 1; // 新节点的下一个位置
+        const nextPos = e2 + 1; // 新节点的下一个位置  这里是判断下一个节点是否存在来判断是insert还是insertBefore
         const anchor = nextPos < c2.length ? c2[nextPos].el : null;
         while (i <= e2) {
           patch(null, c2[i], container, anchor);
@@ -197,17 +197,19 @@ export function createRenderer(options) {
         // 调整顺序
         //  我们可以按照新的队列，倒序插入insertBefore 通过参照物，插入到参照物的前面
 
-        // 插入的过程中，可能新的元素多，需要创建
+        // 插入的过程中，可能新的元素多，需要创建  toBePatched - 1  索引
         for (let i = toBePatched - 1; i >= 0; i--) {
           console.log("🚀 ~ patchKeyedChildren ~ i:", i);
+          // 中间元素的最后一个
           const nextIndex = i + s2;
           const nextChild = c2[nextIndex];
           const anchor =
             nextIndex + 1 < c2.length ? c2[nextIndex + 1].el : null;
+          //  h创建的是没有el （真实 Dom的）
           if (!nextChild.el) {
-            patch(null, nextChild, container, anchor);
+            patch(null, nextChild, container, anchor); //创建h插入
           } else {
-            hostInsert(nextChild.el, container, anchor);
+            hostInsert(nextChild.el, container, anchor); //接着倒序插入
           }
           // if (newIndexToOldIndexMap[i] === 0) {
           //   // 如果是0，说明没有移动过
