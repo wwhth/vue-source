@@ -29,7 +29,6 @@ const getSequences = (arr) => {
 
 				// mid = (start + end) >> 1
 				if (arr[result[mid]] < arrI) {
-
 					start = mid + 1
 				} else {
 					end = mid
@@ -38,7 +37,7 @@ const getSequences = (arr) => {
 		}
 		if (arrI < arr[result[start]]) {
 			debugger
-			p[i] = result[start - 1]   //找到的那个节点的前一个
+			p[i] = result[start - 1] //找到的那个节点的前一个
 			result[start] = i
 			console.log("🚀 ~ getSequences ~ result:", result)
 		}
@@ -50,7 +49,7 @@ const getSequences = (arr) => {
 	let last = result[l - 1]
 	while (l-- > 0) {
 		result[l] = last
-		last = p[last]  //在数组中找到最后一个
+		last = p[last] //在数组中找到最后一个
 	}
 	// 需要创建一个 前驱节点，进行倒序追溯 （因为最后一项，肯定是不会错的）
 	return result
