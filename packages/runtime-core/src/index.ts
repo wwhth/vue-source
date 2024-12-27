@@ -8,6 +8,7 @@
  */
 import { ShapeFlags } from "@vue/shared";
 import { isSameVnode } from "./h";
+import { getSequences } from "./seq";
 
 export function createRenderer(options) {
   // core中不关心如何渲染
@@ -196,6 +197,9 @@ export function createRenderer(options) {
         );
         // 调整顺序
         //  我们可以按照新的队列，倒序插入insertBefore 通过参照物，插入到参照物的前面
+        let increasingSeq = getSequences(newIndexToOldIndexMap);
+        let j = increasingSeq.length - 1; // 最大递增子序列的最后一个索引
+       console.log("🚀 ~ patchKeyedChildren ~ increasingSeq:", increasingSeq)
 
         // 插入的过程中，可能新的元素多，需要创建  toBePatched - 1  索引
         for (let i = toBePatched - 1; i >= 0; i--) {
@@ -209,7 +213,13 @@ export function createRenderer(options) {
           if (!nextChild.el) {
             patch(null, nextChild, container, anchor); //创建h插入
           } else {
-            hostInsert(nextChild.el, container, anchor); //接着倒序插入
+            if (i == increasingSeq[j]) {
+              j--  //diff算法优化
+            } else {
+              
+              hostInsert(nextChild.el, container, anchor); //接着倒序插入
+            }
+
           }
           // if (newIndexToOldIndexMap[i] === 0) {
           //   // 如果是0，说明没有移动过

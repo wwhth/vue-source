@@ -156,6 +156,54 @@ function createVNode(type, props, children) {
   return vNode;
 }
 
+// packages/runtime-core/src/seq.ts
+var getSequences = (arr) => {
+  debugger;
+  const result = [0];
+  const p = result.slice(0);
+  let start;
+  let end;
+  let mid;
+  const len = arr.length;
+  for (let i = 0; i < len; i++) {
+    const arrI = arr[i];
+    if (arrI !== 0) {
+      const last2 = result[result.length - 1];
+      if (arrI > arr[last2]) {
+        p[i] = last2;
+        console.log("\u{1F680} ~ getSequences ~ arrI:", arrI, arr[last2], last2);
+        result.push(i);
+        console.log("\u{1F680} ~ getSequences ~ result:", result);
+        continue;
+      }
+      start = 0;
+      end = result.length - 1;
+      while (start < end) {
+        mid = (start + end) / 2 | 0;
+        if (arr[result[mid]] < arrI) {
+          start = mid + 1;
+        } else {
+          end = mid;
+        }
+      }
+    }
+    if (arrI < arr[result[start]]) {
+      debugger;
+      p[i] = result[start - 1];
+      result[start] = i;
+      console.log("\u{1F680} ~ getSequences ~ result:", result);
+    }
+    console.log("\u{1F680} ~ getSequences ~ p:", p);
+  }
+  let l = result.length;
+  let last = result[l - 1];
+  while (l-- > 0) {
+    result[l] = last;
+    last = p[last];
+  }
+  return result;
+};
+
 // packages/runtime-core/src/index.ts
 function createRenderer(options) {
   const {
@@ -301,6 +349,9 @@ function createRenderer(options) {
           "\u{1F680} ~ patchKeyedChildren ~ newIndexToOldIndexMap:",
           newIndexToOldIndexMap
         );
+        let increasingSeq = getSequences(newIndexToOldIndexMap);
+        let j = increasingSeq.length - 1;
+        console.log("\u{1F680} ~ patchKeyedChildren ~ increasingSeq:", increasingSeq);
         for (let i3 = toBePatched - 1; i3 >= 0; i3--) {
           console.log("\u{1F680} ~ patchKeyedChildren ~ i:", i3);
           const nextIndex = i3 + s2;
@@ -309,7 +360,11 @@ function createRenderer(options) {
           if (!nextChild.el) {
             patch(null, nextChild, container, anchor);
           } else {
-            hostInsert(nextChild.el, container, anchor);
+            if (i3 == increasingSeq[j]) {
+              j--;
+            } else {
+              hostInsert(nextChild.el, container, anchor);
+            }
           }
         }
       }

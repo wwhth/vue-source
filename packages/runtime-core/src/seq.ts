@@ -1,6 +1,4 @@
-// 最长递增子序列
-// [1, 2, 3, 5, 4, 9, 7, 8, 6]
-const getSequences = (arr) => {
+export const getSequences = (arr) => {
 	debugger
 	const result = [0]
 	const p = result.slice(0)  // 前一个节点的索引
@@ -54,5 +52,3 @@ const getSequences = (arr) => {
 	// 需要创建一个 前驱节点，进行倒序追溯 （因为最后一项，肯定是不会错的）
 	return result
 }
-console.log(getSequences([2, 3, 1, 5, 6, 8, 7, 9, 4]))
-// console.log(getSequences([1, 2, 3, 4, 5, 8, 9, 10, 6]))
