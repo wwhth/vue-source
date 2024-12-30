@@ -7,7 +7,7 @@
  * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
  */
 import { ShapeFlags } from "@vue/shared";
-import { isSameVnode } from "./h";
+import { Fragment, isSameVnode, Text } from "./h";
 import { getSequences } from "./seq";
 
 export function createRenderer(options) {
@@ -199,8 +199,7 @@ export function createRenderer(options) {
         //  我们可以按照新的队列，倒序插入insertBefore 通过参照物，插入到参照物的前面
         let increasingSeq = getSequences(newIndexToOldIndexMap);
         let j = increasingSeq.length - 1; // 最大递增子序列的最后一个索引
-       console.log("🚀 ~ patchKeyedChildren ~ increasingSeq:", increasingSeq)
-
+        console.log("🚀 ~ patchKeyedChildren ~ increasingSeq:", increasingSeq)
         // 插入的过程中，可能新的元素多，需要创建  toBePatched - 1  索引
         for (let i = toBePatched - 1; i >= 0; i--) {
           console.log("🚀 ~ patchKeyedChildren ~ i:", i);
@@ -216,7 +215,6 @@ export function createRenderer(options) {
             if (i == increasingSeq[j]) {
               j--  //diff算法优化
             } else {
-              
               hostInsert(nextChild.el, container, anchor); //接着倒序插入
             }
 
@@ -274,6 +272,33 @@ export function createRenderer(options) {
       }
     }
   };
+
+  const processText = (n1, n2, container) => {
+    // 如果还没有创建文本
+    if (n1 == null) {
+      // 1.虚拟节点要关联真是节点
+      // 2.将节点插入到页面中
+      hostInsert(n2.el = hostCreateText(n2.children, container))
+    } else {
+      const el = (n2.el = n1.el)
+      if (n1.children !== n2.children) {
+        hostSetText(el, n2.children)
+      }
+    }
+  };
+  /**
+   * 处理文本
+   * @param n1 
+   * @param n2 
+   * @param container 
+   */
+  const processFragment = (n1, n2, container) => {
+    if (n1 == null) {
+      mountChildren(n2.children, container);
+    } else {
+      patchKeyedChildren(n1.children, n2.children, container);
+    }
+  };
   const patch = (n1, n2, container, anchor = null) => {
     console.log("🚀 ~ patch ~ n1, n2:", n1, n2);
     if (n1 == n2) {
@@ -284,11 +309,25 @@ export function createRenderer(options) {
       unmount(n1);
       n1 = null; // 卸载完成之后，n1就为null了 ,会执行n2的初始化操作
     }
-    processElement(n1, n2, container, anchor);
+    const { type } = n2
+    switch (type) {
+      case Text:
+        processText(n1, n2, container);
+        break;
+      case Fragment:
+        processFragment(n1, n2, container);
+        break;
+      default:
+        processElement(n1, n2, container, anchor);
+    }
   };
 
   function unmount(vnode) {
-    return hostRemove(vnode.el);
+    if (vnode.type === Fragment) {
+      return unmountChildren(vnode.children)
+    } else {
+      return hostRemove(vnode.el);
+    }
   }
   // 多次调用render会进行虚拟节点的比较，在进行更新
 
@@ -298,12 +337,14 @@ export function createRenderer(options) {
         // 卸载操作
         unmount(container._vnode);
       }
-    }
-    // 将虚拟节点变成真实节点进行渲染
-    patch(container._vnode || null, vnode, container);
-    console.log("🚀 ~ render ~ container:", container?._vnode);
+    } else {
+      // 将虚拟节点变成真实节点进行渲染
+      patch(container._vnode || null, vnode, container);
+      console.log("🚀 ~ render ~ container:", container?._vnode);
 
-    container._vnode = vnode;
+      container._vnode = vnode;
+    }
+
   };
   return {
     render,
