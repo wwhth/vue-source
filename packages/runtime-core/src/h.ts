@@ -1,4 +1,4 @@
-import { isObject, ShapeFlags } from "@vue/shared"; // h函数用于创建虚拟节点
+import { isObject, isString, ShapeFlags } from "@vue/shared"; // h函数用于创建虚拟节点
 
 export function h(type, propsOrChildren?, children?) {
   debugger
@@ -28,11 +28,13 @@ export function isVNode(v) {
 const getShapeFlag = (type) => {
   return typeof type === "string"
     ? ShapeFlags.ELEMENT
-    : ShapeFlags.STATEFUL_COMPONENT;
+    : isObject(type)
+    ? ShapeFlags.STATEFUL_COMPONENT
+    : 0;
 };
 export function isSameVnode(n1, n2) {
   console.log("🚀 ~ isSameVnode ~ n1, n2:", n1, n2)
-  return n1.type === n2.type && n1.key === n2.key; 
+  return n1.type === n2.type && n1.key === n2.key;
 }
 
 export const Text = Symbol("Text");
@@ -47,10 +49,12 @@ export function createVNode(type, props?, children?) {
     shapeFlag: getShapeFlag(type), // 虚拟节点的类型
     el: null, // 虚拟节点对应的真实节点
   };
-  if (Array.isArray(children)) {
-    vNode.shapeFlag |= ShapeFlags.ARRAY_CHILDREN;
-  } else if (typeof children === "string") {
-    vNode.shapeFlag |= ShapeFlags.TEXT_CHILDREN;
+  if (children) {
+    if (Array.isArray(children)) {
+      vNode.shapeFlag |= ShapeFlags.ARRAY_CHILDREN;
+    } else if (typeof children === "string") {
+      vNode.shapeFlag |= ShapeFlags.TEXT_CHILDREN;
+    }
   }
   return vNode;
 }

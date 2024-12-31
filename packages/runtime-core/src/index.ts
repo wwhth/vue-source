@@ -9,6 +9,7 @@
 import { ShapeFlags } from "@vue/shared";
 import { Fragment, isSameVnode, Text } from "./h";
 import { getSequences } from "./seq";
+import { reactive, ReactiveEffect } from "@vue/reactivity";
 
 export function createRenderer(options) {
   // core中不关心如何渲染
@@ -299,6 +300,44 @@ export function createRenderer(options) {
       patchKeyedChildren(n1.children, n2.children, container);
     }
   };
+  const mountComponent = (n2, container, anchor) => {
+    // 组件可以基于自己的状态重新渲染effect
+    const { data = () => { }, render = () => { } } = n2.type
+    const state = reactive(data());
+    const instance = {
+      state,//状态
+      vnode: n2,//组件的虚拟节点 
+      subTree: null,//子树
+      isMounted: false,//是否挂载完成
+      update: null //组件的更新函数
+    }
+    const componentFn = () => {
+      // 我们要在这里区分，是第一次还是之后的
+      if (!instance.isMounted) {
+        
+        const  subTree=render.call(state,state) //this指向state,proxy 也是state
+        patch(null, subTree, container, anchor)
+        instance.isMounted = true
+        instance.subTree=subTree
+      } else {
+        // 基于状态的组件更新
+        const subTree = render.call(state, state)
+        // 比较上一次子树和这次子树
+        patch(instance.subTree, subTree, container, anchor)
+        instance.subTree = subTree
+      }
+    }
+    const update = (instance.update=() =>  effect.run() )
+    const effect = new ReactiveEffect(componentFn, () => update())
+    update()
+  };
+  const processComponent = (n1, n2, container, anchor) => {
+    if (n1 == null) {
+      mountComponent(n2, container, anchor);
+    } else {
+      updateComponent(n1, n2);
+    }
+  };
   const patch = (n1, n2, container, anchor = null) => {
     console.log("🚀 ~ patch ~ n1, n2:", n1, n2);
     if (n1 == n2) {
@@ -309,7 +348,7 @@ export function createRenderer(options) {
       unmount(n1);
       n1 = null; // 卸载完成之后，n1就为null了 ,会执行n2的初始化操作
     }
-    const { type } = n2
+    const { type ,shapeFlag } = n2
     switch (type) {
       case Text:
         processText(n1, n2, container);
@@ -318,7 +357,11 @@ export function createRenderer(options) {
         processFragment(n1, n2, container);
         break;
       default:
-        processElement(n1, n2, container, anchor);
+        if (shapeFlag & ShapeFlags.ELEMENT) {
+          processElement(n1, n2, container, anchor);
+        } else if (shapeFlag & ShapeFlags.COMPONENT) {  //vue3中对于函数式组件已经废弃了，没有性能节约
+          processComponent(n1, n2, container, anchor);
+        }
     }
   };
 
