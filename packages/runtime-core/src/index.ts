@@ -10,6 +10,7 @@ import { ShapeFlags } from "@vue/shared";
 import { Fragment, isSameVnode, Text } from "./h";
 import { getSequences } from "./seq";
 import { reactive, ReactiveEffect } from "@vue/reactivity";
+import queueJob from "./scheduler";
 
 export function createRenderer(options) {
   // core中不关心如何渲染
@@ -328,7 +329,7 @@ export function createRenderer(options) {
       }
     }
     const update = (instance.update=() =>  effect.run() )
-    const effect = new ReactiveEffect(componentFn, () => update())
+    const effect = new ReactiveEffect(componentFn, () => queueJob(update))
     update()
   };
   const processComponent = (n1, n2, container, anchor) => {
