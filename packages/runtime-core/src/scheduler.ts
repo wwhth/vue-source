@@ -17,6 +17,7 @@ export default function queueJob(job) {
             const copy = queue.slice()//先拷贝在执行
             queue.length = 0
             copy.forEach(job => job())
+            copy.length = 0
         })
     }
 }

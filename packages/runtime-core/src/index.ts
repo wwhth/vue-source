@@ -301,97 +301,134 @@ export function createRenderer(options) {
       patchKeyedChildren(n1.children, n2.children, container);
     }
   };
-  const mountComponent = (n2, container, anchor) => {
-    // 组件可以基于自己的状态重新渲染effect
-    const { data = () => { }, render = () => { } } = n2.type
-    const state = reactive(data());
-    const instance = {
-      state,//状态
-      vnode: n2,//组件的虚拟节点 
-      subTree: null,//子树
-      isMounted: false,//是否挂载完成
-      update: null //组件的更新函数
-    }
-    const componentFn = () => {
-      // 我们要在这里区分，是第一次还是之后的
-      if (!instance.isMounted) {
-        
-        const  subTree=render.call(state,state) //this指向state,proxy 也是state
-        patch(null, subTree, container, anchor)
-        instance.isMounted = true
-        instance.subTree=subTree
-      } else {
-        // 基于状态的组件更新
-        const subTree = render.call(state, state)
-        // 比较上一次子树和这次子树
-        patch(instance.subTree, subTree, container, anchor)
-        instance.subTree = subTree
-      }
-    }
-    const update = (instance.update=() =>  effect.run() )
-    const effect = new ReactiveEffect(componentFn, () => queueJob(update))
-    update()
-  };
-  const processComponent = (n1, n2, container, anchor) => {
-    if (n1 == null) {
-      mountComponent(n2, container, anchor);
-    } else {
-      updateComponent(n1, n2);
-    }
-  };
-  const patch = (n1, n2, container, anchor = null) => {
-    console.log("🚀 ~ patch ~ n1, n2:", n1, n2);
-    if (n1 == n2) {
-      return;
-    }
-    // 更新操作
-    if (n1 && !isSameVnode(n1, n2)) {
-      unmount(n1);
-      n1 = null; // 卸载完成之后，n1就为null了 ,会执行n2的初始化操作
-    }
-    const { type ,shapeFlag } = n2
-    switch (type) {
-      case Text:
-        processText(n1, n2, container);
-        break;
-      case Fragment:
-        processFragment(n1, n2, container);
-        break;
-      default:
-        if (shapeFlag & ShapeFlags.ELEMENT) {
-          processElement(n1, n2, container, anchor);
-        } else if (shapeFlag & ShapeFlags.COMPONENT) {  //vue3中对于函数式组件已经废弃了，没有性能节约
-          processComponent(n1, n2, container, anchor);
+  const initProps = (instance, rawProps) => {
+    const props = {}
+    const attrs = {}
+    const propsOptions = instance.propsOptions || {}  //用户在组件中定义的
+    if (rawProps) {
+      for (const key in rawProps) {  //用所有的来分裂
+        const value = rawProps[key];
+        if (key in propsOptions) {
+          props[key] = value;  //props不需要深度代理，组件不能更改props，只能传入
+        } else {
+          attrs[key] = value;
         }
+      }
+      // props
+      // if (key.startsWith("on")) {
+      //   // 事件
+      //   const event = key.slice(2).toLowerCase();
+      //   instance.vnode.props[event] = rawProps[key];
+      // } else {
+      //   // attrs
+      //   instance.attrs[key] = rawProps[key];
+      // }
     }
-  };
+    instance.props = reactive(props);
+    instance.attrs = attrs;
+  }
+}
+const mountComponent = (vnode, container, anchor) => {
+  // 组件可以基于自己的状态重新渲染effect
+  const { data = () => { }, render = () => { }, props: propsOptions = {} } = vnode.type
+  const state = reactive(data());
+  const instance = {
+    state,//状态
+    vnode,//组件的虚拟节点 
+    subTree: null,//子树
+    isMounted: false,//是否挂载完成
+    update: null, //组件的更新函数
+    props: {},//props
+    attrs: {}, //attrs
+    propsOptions,//props选项
+    component: null, //组件实例
+  }
 
-  function unmount(vnode) {
-    if (vnode.type === Fragment) {
-      return unmountChildren(vnode.children)
+  // 根据propsOptions来区分props和attrs
+  vnode.component = instance
+  // 元素更新 n2.el =n1.el
+  // 组件更新  n2.component.subTree.el = n1.component.subTree.el
+  initProps(instance, vnode.props)
+  const componentFn = () => {
+    // 我们要在这里区分，是第一次还是之后的
+    if (!instance.isMounted) {
+
+      const subTree = render.call(state, state) //this指向state,proxy 也是state
+      patch(null, subTree, container, anchor)
+      instance.isMounted = true
+      instance.subTree = subTree
     } else {
-      return hostRemove(vnode.el);
+      // 基于状态的组件更新
+      const subTree = render.call(state, state)
+      // 比较上一次子树和这次子树
+      patch(instance.subTree, subTree, container, anchor)
+      instance.subTree = subTree
     }
   }
-  // 多次调用render会进行虚拟节点的比较，在进行更新
-
-  const render = (vnode, container) => {
-    if (vnode === null) {
-      if (container._vnode) {
-        // 卸载操作
-        unmount(container._vnode);
+  const update = (instance.update = () => effect.run())
+  const effect = new ReactiveEffect(componentFn, () => queueJob(update))
+  update()
+};
+const processComponent = (n1, n2, container, anchor) => {
+  if (n1 == null) {
+    mountComponent(n2, container, anchor);
+  } else {
+    updateComponent(n1, n2);
+  }
+};
+const patch = (n1, n2, container, anchor = null) => {
+  console.log("🚀 ~ patch ~ n1, n2:", n1, n2);
+  if (n1 == n2) {
+    return;
+  }
+  // 更新操作
+  if (n1 && !isSameVnode(n1, n2)) {
+    unmount(n1);
+    n1 = null; // 卸载完成之后，n1就为null了 ,会执行n2的初始化操作
+  }
+  const { type, shapeFlag } = n2
+  switch (type) {
+    case Text:
+      processText(n1, n2, container);
+      break;
+    case Fragment:
+      processFragment(n1, n2, container);
+      break;
+    default:
+      if (shapeFlag & ShapeFlags.ELEMENT) {
+        processElement(n1, n2, container, anchor);
+      } else if (shapeFlag & ShapeFlags.COMPONENT) {  //vue3中对于函数式组件已经废弃了，没有性能节约
+        processComponent(n1, n2, container, anchor);
       }
-    } else {
-      // 将虚拟节点变成真实节点进行渲染
-      patch(container._vnode || null, vnode, container);
-      console.log("🚀 ~ render ~ container:", container?._vnode);
+  }
+};
 
-      container._vnode = vnode;
+function unmount(vnode) {
+  if (vnode.type === Fragment) {
+    return unmountChildren(vnode.children)
+  } else {
+    return hostRemove(vnode.el);
+  }
+}
+// 多次调用render会进行虚拟节点的比较，在进行更新
+
+const render = (vnode, container) => {
+  if (vnode === null) {
+    if (container._vnode) {
+      // 卸载操作
+      unmount(container._vnode);
     }
+  } else {
+    // 将虚拟节点变成真实节点进行渲染
+    patch(container._vnode || null, vnode, container);
+    console.log("🚀 ~ render ~ container:", container?._vnode);
 
-  };
-  return {
-    render,
-  };
+    container._vnode = vnode;
+  }
+
+};
+return {
+  render,
+};
 }
 export * from "./h";
