@@ -301,32 +301,32 @@ export function createRenderer(options) {
       patchKeyedChildren(n1.children, n2.children, container);
     }
   };
-  const initProps = (instance, rawProps) => {
-    const props = {}
-    const attrs = {}
-    const propsOptions = instance.propsOptions || {}  //用户在组件中定义的
-    if (rawProps) {
-      for (const key in rawProps) {  //用所有的来分裂
-        const value = rawProps[key];
-        if (key in propsOptions) {
-          props[key] = value;  //props不需要深度代理，组件不能更改props，只能传入
-        } else {
-          attrs[key] = value;
-        }
+  
+const initProps = (instance, rawProps) => {
+  const props = {}
+  const attrs = {}
+  const propsOptions = instance.propsOptions || {}  //用户在组件中定义的
+  if (rawProps) {
+    for (const key in rawProps) {  //用所有的来分裂
+      const value = rawProps[key];
+      if (key in propsOptions) {
+        props[key] = value;  //props不需要深度代理，组件不能更改props，只能传入
+      } else {
+        attrs[key] = value;
       }
-      // props
-      // if (key.startsWith("on")) {
-      //   // 事件
-      //   const event = key.slice(2).toLowerCase();
-      //   instance.vnode.props[event] = rawProps[key];
-      // } else {
-      //   // attrs
-      //   instance.attrs[key] = rawProps[key];
-      // }
     }
-    instance.props = reactive(props);
-    instance.attrs = attrs;
+    // props
+    // if (key.startsWith("on")) {
+    //   // 事件
+    //   const event = key.slice(2).toLowerCase();
+    //   instance.vnode.props[event] = rawProps[key];
+    // } else {
+    //   // attrs
+    //   instance.attrs[key] = rawProps[key];
+    // }
   }
+  instance.props = reactive(props);
+  instance.attrs = attrs;
 }
 const mountComponent = (vnode, container, anchor) => {
   // 组件可以基于自己的状态重新渲染effect
