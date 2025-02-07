@@ -26,4 +26,9 @@ export function isSymbol(val: unknown): boolean {
   return typeof val === "symbol";
 }
 
+const hasOwnProperty = Object.prototype.hasOwnProperty;
+
+export const hasOwn=(val, key)=> {
+  return hasOwnProperty.call(val, key);
+}
 export * from "./shapeFlags"

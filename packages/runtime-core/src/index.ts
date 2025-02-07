@@ -6,7 +6,7 @@
  * @FilePath: /vue-source/packages/runtime-core/src/index.ts
  * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
  */
-import { ShapeFlags } from "@vue/shared";
+import { hasOwn, ShapeFlags } from "@vue/shared";
 import { Fragment, isSameVnode, Text } from "./h";
 import { getSequences } from "./seq";
 import { reactive, ReactiveEffect } from "@vue/reactivity";
@@ -294,141 +294,207 @@ export function createRenderer(options) {
    * @param n2 
    * @param container 
    */
+  // 处理片段
   const processFragment = (n1, n2, container) => {
+    // 如果n1为空，则将n2的子节点挂载到container中
     if (n1 == null) {
       mountChildren(n2.children, container);
+      // 否则，将n1和n2的子节点进行对比，并更新container中的节点
     } else {
       patchKeyedChildren(n1.children, n2.children, container);
     }
   };
-  
-const initProps = (instance, rawProps) => {
-  const props = {}
-  const attrs = {}
-  const propsOptions = instance.propsOptions || {}  //用户在组件中定义的
-  if (rawProps) {
-    for (const key in rawProps) {  //用所有的来分裂
-      const value = rawProps[key];
-      if (key in propsOptions) {
-        props[key] = value;  //props不需要深度代理，组件不能更改props，只能传入
+
+  // 初始化props
+  const initProps = (instance, rawProps) => {
+    const props = {}
+    const attrs = {}
+    const propsOptions = instance.propsOptions || {}  //用户在组件中定义的
+    if (rawProps) {
+      for (const key in rawProps) {  //用所有的来分裂
+        const value = rawProps[key];
+        if (key in propsOptions) {
+          props[key] = value;  //props不需要深度代理，组件不能更改props，只能传入
+        } else {
+          attrs[key] = value;
+        }
+      }
+      // props
+      // if (key.startsWith("on")) {
+      //   // 事件
+      //   const event = key.slice(2).toLowerCase();
+      //   instance.vnode.props[event] = rawProps[key];
+      // } else {
+      //   // attrs
+      //   instance.attrs[key] = rawProps[key];
+      // }
+    }
+    instance.props = reactive(props);
+    instance.attrs = attrs;
+  }
+  const mountComponent = (vnode, container, anchor) => {
+    // 组件可以基于自己的状态重新渲染effect
+    const { data = () => { }, render = () => { }, props: propsOptions = {} } = vnode.type
+    // 创建响应式数据
+    const state = reactive(data());
+    // 创建组件实例
+    const instance = {
+      state,//状态
+      vnode,//组件的虚拟节点 
+      subTree: null,//子树
+      isMounted: false,//是否挂载完成
+      update: null, //组件的更新函数
+      props: {},//props
+      attrs: {}, //attrs
+      propsOptions,//props选项
+      component: null, //组件实例
+      proxy: null //代理props,arrts,data ，让用户更方便的使用
+    }
+
+    // 根据propsOptions来区分props和attrs
+    vnode.component = instance
+    // 元素更新 n2.el =n1.el
+    // 组件更新  n2.component.subTree.el = n1.component.subTree.el
+    initProps(instance, vnode.props)
+    // 创建组件函数
+    // 访问到props，attrs，data
+    const publicProperty = {
+      $attrs: instance.attrs,
+      $props: instance.props,
+      $data: instance.state,
+      $slots: vnode.children
+    }
+    instance.proxy = new Proxy(instance, {
+      get(target, key) {
+        const { state, props, attrs } = target
+        if (state && hasOwn(state, key)) {
+          return state[key]
+        } else if (props && hasOwn(props, key)) {
+          return props[key]
+        } else if (attrs && hasOwn(attrs, key)) {
+          return attrs[key]
+        }
+       const getter =  publicProperty[key]  //如果用户访问了$data，$props，$attrs，$slots，那么就返回对应的值
+        if (getter) {
+         return getter(target)
+       }
+      },
+      // 对于一些无法修改的属性 $attrs,$slots ... 只能读取，没有set方法
+      set(target, key, value) {
+        const { state, props, attrs } = target
+        if (state && hasOwn(state, key)) {
+          state[key] = value
+        } else if (props && hasOwn(props, key)) {
+          // props[key] = value
+          console.warn("不能修改props")
+        } 
+        return true
+      }
+    })
+
+
+
+    const componentFn = () => {
+      // 我们要在这里区分，是第一次还是之后的
+      if (!instance.isMounted) {
+
+        // 第一次渲染
+        const subTree = render.call(instance.proxy, state) //this指向state,proxy 也是state
+        // 挂载子树
+        patch(null, subTree, container, anchor)
+        // 设置挂载完成
+        instance.isMounted = true
+        // 保存子树
+        instance.subTree = subTree
       } else {
-        attrs[key] = value;
+        // 基于状态的组件更新
+        // 渲染新的子树
+        const subTree = render.call(instance.proxy, state)
+        // 比较上一次子树和这次子树
+        patch(instance.subTree, subTree, container, anchor)
+        // 保存新的子树
+        instance.subTree = subTree
       }
     }
-    // props
-    // if (key.startsWith("on")) {
-    //   // 事件
-    //   const event = key.slice(2).toLowerCase();
-    //   instance.vnode.props[event] = rawProps[key];
-    // } else {
-    //   // attrs
-    //   instance.attrs[key] = rawProps[key];
-    // }
-  }
-  instance.props = reactive(props);
-  instance.attrs = attrs;
-}
-const mountComponent = (vnode, container, anchor) => {
-  // 组件可以基于自己的状态重新渲染effect
-  const { data = () => { }, render = () => { }, props: propsOptions = {} } = vnode.type
-  const state = reactive(data());
-  const instance = {
-    state,//状态
-    vnode,//组件的虚拟节点 
-    subTree: null,//子树
-    isMounted: false,//是否挂载完成
-    update: null, //组件的更新函数
-    props: {},//props
-    attrs: {}, //attrs
-    propsOptions,//props选项
-    component: null, //组件实例
-  }
-
-  // 根据propsOptions来区分props和attrs
-  vnode.component = instance
-  // 元素更新 n2.el =n1.el
-  // 组件更新  n2.component.subTree.el = n1.component.subTree.el
-  initProps(instance, vnode.props)
-  const componentFn = () => {
-    // 我们要在这里区分，是第一次还是之后的
-    if (!instance.isMounted) {
-
-      const subTree = render.call(state, state) //this指向state,proxy 也是state
-      patch(null, subTree, container, anchor)
-      instance.isMounted = true
-      instance.subTree = subTree
+    // 创建更新函数
+    const update = (instance.update = () => effect.run())
+    // 创建响应式effect
+    const effect = new ReactiveEffect(componentFn, () => queueJob(update))
+    // 执行更新函数
+    update()
+  };
+  // 定义一个处理组件的函数，参数分别为旧节点n1，新节点n2，容器container，锚点anchor
+  const processComponent = (n1, n2, container, anchor) => {
+    // 如果旧节点为空，则调用mountComponent函数，将新节点挂载到容器中
+    if (n1 == null) {
+      mountComponent(n2, container, anchor);
+      // 否则，调用updateComponent函数，更新旧节点为新节点
     } else {
-      // 基于状态的组件更新
-      const subTree = render.call(state, state)
-      // 比较上一次子树和这次子树
-      patch(instance.subTree, subTree, container, anchor)
-      instance.subTree = subTree
+      updateComponent(n1, n2);
+    }
+  };
+  // 定义patch函数，用于更新虚拟DOM
+  const patch = (n1, n2, container, anchor = null) => {
+    console.log("🚀 ~ patch ~ n1, n2:", n1, n2);
+    // 如果n1和n2相同，则直接返回
+    if (n1 == n2) {
+      return;
+    }
+    // 更新操作
+    // 如果n1存在且n1和n2不相同，则卸载n1
+    if (n1 && !isSameVnode(n1, n2)) {
+      unmount(n1);
+      n1 = null; // 卸载完成之后，n1就为null了 ,会执行n2的初始化操作
+    }
+    // 获取n2的类型和标志
+    const { type, shapeFlag } = n2
+    // 根据n2的类型进行不同的处理
+    switch (type) {
+      case Text:
+        // 处理文本节点
+        processText(n1, n2, container);
+        break;
+      case Fragment:
+        // 处理片段节点
+        processFragment(n1, n2, container);
+        break;
+      default:
+        // 如果n2是元素节点，则处理元素节点
+        if (shapeFlag & ShapeFlags.ELEMENT) {
+          processElement(n1, n2, container, anchor);
+        } else if (shapeFlag & ShapeFlags.COMPONENT) {  //vue3中对于函数式组件已经废弃了，没有性能节约
+          // 如果n2是组件节点，则处理组件节点
+          processComponent(n1, n2, container, anchor);
+        }
+    }
+  };
+
+  function unmount(vnode) {
+    if (vnode.type === Fragment) {
+      return unmountChildren(vnode.children)
+    } else {
+      return hostRemove(vnode.el);
     }
   }
-  const update = (instance.update = () => effect.run())
-  const effect = new ReactiveEffect(componentFn, () => queueJob(update))
-  update()
-};
-const processComponent = (n1, n2, container, anchor) => {
-  if (n1 == null) {
-    mountComponent(n2, container, anchor);
-  } else {
-    updateComponent(n1, n2);
-  }
-};
-const patch = (n1, n2, container, anchor = null) => {
-  console.log("🚀 ~ patch ~ n1, n2:", n1, n2);
-  if (n1 == n2) {
-    return;
-  }
-  // 更新操作
-  if (n1 && !isSameVnode(n1, n2)) {
-    unmount(n1);
-    n1 = null; // 卸载完成之后，n1就为null了 ,会执行n2的初始化操作
-  }
-  const { type, shapeFlag } = n2
-  switch (type) {
-    case Text:
-      processText(n1, n2, container);
-      break;
-    case Fragment:
-      processFragment(n1, n2, container);
-      break;
-    default:
-      if (shapeFlag & ShapeFlags.ELEMENT) {
-        processElement(n1, n2, container, anchor);
-      } else if (shapeFlag & ShapeFlags.COMPONENT) {  //vue3中对于函数式组件已经废弃了，没有性能节约
-        processComponent(n1, n2, container, anchor);
+  // 多次调用render会进行虚拟节点的比较，在进行更新
+
+  const render = (vnode, container) => {
+    if (vnode === null) {
+      if (container._vnode) {
+        // 卸载操作
+        unmount(container._vnode);
       }
-  }
-};
+    } else {
+      // 将虚拟节点变成真实节点进行渲染
+      patch(container._vnode || null, vnode, container);
+      console.log("🚀 ~ render ~ container:", container?._vnode);
 
-function unmount(vnode) {
-  if (vnode.type === Fragment) {
-    return unmountChildren(vnode.children)
-  } else {
-    return hostRemove(vnode.el);
-  }
-}
-// 多次调用render会进行虚拟节点的比较，在进行更新
-
-const render = (vnode, container) => {
-  if (vnode === null) {
-    if (container._vnode) {
-      // 卸载操作
-      unmount(container._vnode);
+      container._vnode = vnode;
     }
-  } else {
-    // 将虚拟节点变成真实节点进行渲染
-    patch(container._vnode || null, vnode, container);
-    console.log("🚀 ~ render ~ container:", container?._vnode);
 
-    container._vnode = vnode;
-  }
-
-};
-return {
-  render,
-};
+  };
+  return {
+    render,
+  };
 }
 export * from "./h";
