@@ -11,6 +11,7 @@ import { Fragment, isSameVnode, Text } from "./h";
 import { getSequences } from "./seq";
 import { reactive, ReactiveEffect } from "@vue/reactivity";
 import queueJob from "./scheduler";
+import { createComponentInstance, setupComponent } from "./components";
 
 export function createRenderer(options) {
   // core中不关心如何渲染
@@ -201,7 +202,7 @@ export function createRenderer(options) {
         //  我们可以按照新的队列，倒序插入insertBefore 通过参照物，插入到参照物的前面
         let increasingSeq = getSequences(newIndexToOldIndexMap);
         let j = increasingSeq.length - 1; // 最大递增子序列的最后一个索引
-        console.log("🚀 ~ patchKeyedChildren ~ increasingSeq:", increasingSeq)
+        console.log("🚀 ~ patchKeyedChildren ~ increasingSeq:", increasingSeq);
         // 插入的过程中，可能新的元素多，需要创建  toBePatched - 1  索引
         for (let i = toBePatched - 1; i >= 0; i--) {
           console.log("🚀 ~ patchKeyedChildren ~ i:", i);
@@ -215,11 +216,10 @@ export function createRenderer(options) {
             patch(null, nextChild, container, anchor); //创建h插入
           } else {
             if (i == increasingSeq[j]) {
-              j--  //diff算法优化
+              j--; //diff算法优化
             } else {
               hostInsert(nextChild.el, container, anchor); //接着倒序插入
             }
-
           }
           // if (newIndexToOldIndexMap[i] === 0) {
           //   // 如果是0，说明没有移动过
@@ -280,19 +280,19 @@ export function createRenderer(options) {
     if (n1 == null) {
       // 1.虚拟节点要关联真是节点
       // 2.将节点插入到页面中
-      hostInsert(n2.el = hostCreateText(n2.children, container))
+      hostInsert((n2.el = hostCreateText(n2.children, container)));
     } else {
-      const el = (n2.el = n1.el)
+      const el = (n2.el = n1.el);
       if (n1.children !== n2.children) {
-        hostSetText(el, n2.children)
+        hostSetText(el, n2.children);
       }
     }
   };
   /**
    * 处理文本
-   * @param n1 
-   * @param n2 
-   * @param container 
+   * @param n1
+   * @param n2
+   * @param container
    */
   // 处理片段
   const processFragment = (n1, n2, container) => {
@@ -304,124 +304,45 @@ export function createRenderer(options) {
       patchKeyedChildren(n1.children, n2.children, container);
     }
   };
-
-  // 初始化props
-  const initProps = (instance, rawProps) => {
-    const props = {}
-    const attrs = {}
-    const propsOptions = instance.propsOptions || {}  //用户在组件中定义的
-    if (rawProps) {
-      for (const key in rawProps) {  //用所有的来分裂
-        const value = rawProps[key];
-        if (key in propsOptions) {
-          props[key] = value;  //props不需要深度代理，组件不能更改props，只能传入
-        } else {
-          attrs[key] = value;
-        }
-      }
-      // props
-      // if (key.startsWith("on")) {
-      //   // 事件
-      //   const event = key.slice(2).toLowerCase();
-      //   instance.vnode.props[event] = rawProps[key];
-      // } else {
-      //   // attrs
-      //   instance.attrs[key] = rawProps[key];
-      // }
-    }
-    instance.props = reactive(props);
-    instance.attrs = attrs;
-  }
-  const mountComponent = (vnode, container, anchor) => {
-    // 组件可以基于自己的状态重新渲染effect
-    const { data = () => { }, render = () => { }, props: propsOptions = {} } = vnode.type
-    // 创建响应式数据
-    const state = reactive(data());
-    // 创建组件实例
-    const instance = {
-      state,//状态
-      vnode,//组件的虚拟节点 
-      subTree: null,//子树
-      isMounted: false,//是否挂载完成
-      update: null, //组件的更新函数
-      props: {},//props
-      attrs: {}, //attrs
-      propsOptions,//props选项
-      component: null, //组件实例
-      proxy: null //代理props,arrts,data ，让用户更方便的使用
-    }
-
-    // 根据propsOptions来区分props和attrs
-    vnode.component = instance
-    // 元素更新 n2.el =n1.el
-    // 组件更新  n2.component.subTree.el = n1.component.subTree.el
-    initProps(instance, vnode.props)
-    // 创建组件函数
-    // 访问到props，attrs，data
-    const publicProperty = {
-      $attrs: instance.attrs,
-      $props: instance.props,
-      $data: instance.state,
-      $slots: vnode.children
-    }
-    instance.proxy = new Proxy(instance, {
-      get(target, key) {
-        const { state, props, attrs } = target
-        if (state && hasOwn(state, key)) {
-          return state[key]
-        } else if (props && hasOwn(props, key)) {
-          return props[key]
-        } else if (attrs && hasOwn(attrs, key)) {
-          return attrs[key]
-        }
-       const getter =  publicProperty[key]  //如果用户访问了$data，$props，$attrs，$slots，那么就返回对应的值
-        if (getter) {
-         return getter(target)
-       }
-      },
-      // 对于一些无法修改的属性 $attrs,$slots ... 只能读取，没有set方法
-      set(target, key, value) {
-        const { state, props, attrs } = target
-        if (state && hasOwn(state, key)) {
-          state[key] = value
-        } else if (props && hasOwn(props, key)) {
-          // props[key] = value
-          console.warn("不能修改props")
-        } 
-        return true
-      }
-    })
-
-
-
+  function setupRenderEffect(instance, container, anchor) {
+    const { render } = instance;
     const componentFn = () => {
       // 我们要在这里区分，是第一次还是之后的
       if (!instance.isMounted) {
-
         // 第一次渲染
-        const subTree = render.call(instance.proxy, state) //this指向state,proxy 也是state
+        const subTree = render.call(instance.proxy, instance.proxy); //this指向state,proxy 也是state
         // 挂载子树
-        patch(null, subTree, container, anchor)
+        patch(null, subTree, container, anchor);
         // 设置挂载完成
-        instance.isMounted = true
+        instance.isMounted = true;
         // 保存子树
-        instance.subTree = subTree
+        instance.subTree = subTree;
       } else {
         // 基于状态的组件更新
         // 渲染新的子树
-        const subTree = render.call(instance.proxy, state)
+        const subTree = render.call(instance.proxy, instance.proxy);
         // 比较上一次子树和这次子树
-        patch(instance.subTree, subTree, container, anchor)
+        patch(instance.subTree, subTree, container, anchor);
         // 保存新的子树
-        instance.subTree = subTree
+        instance.subTree = subTree;
       }
-    }
+    };
     // 创建更新函数
-    const update = (instance.update = () => effect.run())
+    const update = (instance.update = () => effect.run());
     // 创建响应式effect
-    const effect = new ReactiveEffect(componentFn, () => queueJob(update))
+    const effect = new ReactiveEffect(componentFn, () => queueJob(update));
     // 执行更新函数
-    update()
+    update();
+  }
+  const mountComponent = (vnode, container, anchor) => {
+    // 1.先创建实例
+    const instance = (vnode.component = createComponentInstance(vnode));
+
+    // 2.给实例的属性赋值
+    setupComponent(instance);
+
+    // 3.给组件创建一个渲染effect
+    setupRenderEffect(instance, container, anchor);
   };
   // 定义一个处理组件的函数，参数分别为旧节点n1，新节点n2，容器container，锚点anchor
   const processComponent = (n1, n2, container, anchor) => {
@@ -447,7 +368,7 @@ export function createRenderer(options) {
       n1 = null; // 卸载完成之后，n1就为null了 ,会执行n2的初始化操作
     }
     // 获取n2的类型和标志
-    const { type, shapeFlag } = n2
+    const { type, shapeFlag } = n2;
     // 根据n2的类型进行不同的处理
     switch (type) {
       case Text:
@@ -462,7 +383,8 @@ export function createRenderer(options) {
         // 如果n2是元素节点，则处理元素节点
         if (shapeFlag & ShapeFlags.ELEMENT) {
           processElement(n1, n2, container, anchor);
-        } else if (shapeFlag & ShapeFlags.COMPONENT) {  //vue3中对于函数式组件已经废弃了，没有性能节约
+        } else if (shapeFlag & ShapeFlags.COMPONENT) {
+          //vue3中对于函数式组件已经废弃了，没有性能节约
           // 如果n2是组件节点，则处理组件节点
           processComponent(n1, n2, container, anchor);
         }
@@ -471,7 +393,7 @@ export function createRenderer(options) {
 
   function unmount(vnode) {
     if (vnode.type === Fragment) {
-      return unmountChildren(vnode.children)
+      return unmountChildren(vnode.children);
     } else {
       return hostRemove(vnode.el);
     }
@@ -491,7 +413,6 @@ export function createRenderer(options) {
 
       container._vnode = vnode;
     }
-
   };
   return {
     render,
