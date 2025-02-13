@@ -33,6 +33,7 @@ export function createRenderer(options) {
     }
   };
   const mountElement = (vnode, container, anchor) => {
+    console.log("🚀 ~ mountElement ~ vnode:", vnode)
     const { type, children, props, shapeFlag } = vnode;
     // 第一次渲染的时候我们需要让虚拟节点和真实节点关联起来 vNode.el = el
     // 第二次渲染新的vnode，可以和上一次的vnode作比对，之后在更新对应的el元素，可以后续再服用这个dom元素
@@ -48,6 +49,7 @@ export function createRenderer(options) {
       hostSetElementText(el, children);
     } else if (shapeFlag & ShapeFlags.ARRAY_CHILDREN) {
       mountChildren(children, el);
+
     }
     hostInsert(el, container, anchor);
   };
@@ -280,7 +282,8 @@ export function createRenderer(options) {
     if (n1 == null) {
       // 1.虚拟节点要关联真是节点
       // 2.将节点插入到页面中
-      hostInsert((n2.el = hostCreateText(n2.children, container)));
+      console.log("🚀 ~ processText ~ n2:", n2)
+      hostInsert((n2.el = hostCreateText(n2.children)),container);
     } else {
       const el = (n2.el = n1.el);
       if (n1.children !== n2.children) {
@@ -369,9 +372,11 @@ export function createRenderer(options) {
     }
     // 获取n2的类型和标志
     const { type, shapeFlag } = n2;
+    console.log("🚀 ~ patch ~ type:", type,shapeFlag)
     // 根据n2的类型进行不同的处理
     switch (type) {
       case Text:
+        debugger
         // 处理文本节点
         processText(n1, n2, container);
         break;
@@ -380,6 +385,7 @@ export function createRenderer(options) {
         processFragment(n1, n2, container);
         break;
       default:
+        debugger
         // 如果n2是元素节点，则处理元素节点
         if (shapeFlag & ShapeFlags.ELEMENT) {
           processElement(n1, n2, container, anchor);
@@ -409,6 +415,7 @@ export function createRenderer(options) {
     } else {
       // 将虚拟节点变成真实节点进行渲染
       patch(container._vnode || null, vnode, container);
+      console.log("🚀 ~ render ~ container:", container)
       console.log("🚀 ~ render ~ container:", container?._vnode);
 
       container._vnode = vnode;

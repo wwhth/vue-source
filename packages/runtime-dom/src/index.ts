@@ -11,8 +11,10 @@ import patchProp from "./patchProp";
 import { createRenderer } from "@vue/runtime-core";
 const renderOptions = Object.assign({ patchProp }, nodeOps);
 export { renderOptions };
+console.log("🚀 ~ renderOptions:", renderOptions) 
 // render方法采用dom api来进行渲染
 export const render = (vnode, container) => {
+  console.log("🚀 ~ render ~ vnode:", vnode,container)
   return createRenderer(renderOptions).render(vnode, container);
 };
 

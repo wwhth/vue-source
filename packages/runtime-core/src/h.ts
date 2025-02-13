@@ -1,7 +1,6 @@
 import { isObject, isString, ShapeFlags } from "@vue/shared"; // h函数用于创建虚拟节点
 
 export function h(type, propsOrChildren?, children?) {
-  debugger
   let l = arguments.length;
   if (l === 2) {
     if (isObject(propsOrChildren) && !Array.isArray(propsOrChildren)) {
@@ -50,9 +49,10 @@ export function createVNode(type, props?, children?) {
     el: null, // 虚拟节点对应的真实节点
   };
   if (children) {
+    debugger
     if (Array.isArray(children)) {
       vNode.shapeFlag |= ShapeFlags.ARRAY_CHILDREN;
-    } else if (typeof children === "string") {
+    } else if (typeof children === "string"|| typeof children ==="number") {
       vNode.shapeFlag |= ShapeFlags.TEXT_CHILDREN;
     }
   }

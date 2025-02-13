@@ -9,6 +9,7 @@
 // 主要对节点元素的增删改查
 export const nodeOps = {
     insert(el, parent, anchor) {
+        console.log("🚀 ~ insert ~ parent:", parent)
         // appendChild el.insert()  parent.insertBefore(el,otherEle||null)  第三个参数不传的话等价于appendChild
         parent.insertBefore(el, anchor || null)
     },

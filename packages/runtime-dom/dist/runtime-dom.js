@@ -1,6 +1,7 @@
 // packages/runtime-dom/src/nodeOps.ts
 var nodeOps = {
   insert(el, parent, anchor) {
+    console.log("\u{1F680} ~ insert ~ parent:", parent);
     parent.insertBefore(el, anchor || null);
   },
   remove(el) {
@@ -111,7 +112,6 @@ function hasOwn(val, key) {
 
 // packages/runtime-core/src/h.ts
 function h(type, propsOrChildren, children) {
-  debugger;
   let l = arguments.length;
   if (l === 2) {
     if (isObject(propsOrChildren) && !Array.isArray(propsOrChildren)) {
@@ -158,9 +158,10 @@ function createVNode(type, props, children) {
     // 虚拟节点对应的真实节点
   };
   if (children) {
+    debugger;
     if (Array.isArray(children)) {
       vNode.shapeFlag |= 16 /* ARRAY_CHILDREN */;
-    } else if (typeof children === "string") {
+    } else if (typeof children === "string" || typeof children === "number") {
       vNode.shapeFlag |= 8 /* TEXT_CHILDREN */;
     }
   }
@@ -510,6 +511,7 @@ function createRenderer(options) {
     }
   };
   const mountElement = (vnode, container, anchor) => {
+    console.log("\u{1F680} ~ mountElement ~ vnode:", vnode);
     const { type, children, props, shapeFlag } = vnode;
     let el = vnode.el = hostCreateElement(type);
     if (props) {
@@ -677,7 +679,8 @@ function createRenderer(options) {
   };
   const processText = (n1, n2, container) => {
     if (n1 == null) {
-      hostInsert(n2.el = hostCreateText(n2.children, container));
+      console.log("\u{1F680} ~ processText ~ n2:", n2);
+      hostInsert(n2.el = hostCreateText(n2.children), container);
     } else {
       const el = n2.el = n1.el;
       if (n1.children !== n2.children) {
@@ -732,14 +735,17 @@ function createRenderer(options) {
       n1 = null;
     }
     const { type, shapeFlag } = n2;
+    console.log("\u{1F680} ~ patch ~ type:", type, shapeFlag);
     switch (type) {
       case Text:
+        debugger;
         processText(n1, n2, container);
         break;
       case Fragment:
         processFragment(n1, n2, container);
         break;
       default:
+        debugger;
         if (shapeFlag & 1 /* ELEMENT */) {
           processElement(n1, n2, container, anchor);
         } else if (shapeFlag & 6 /* COMPONENT */) {
@@ -761,6 +767,7 @@ function createRenderer(options) {
       }
     } else {
       patch(container._vnode || null, vnode, container);
+      console.log("\u{1F680} ~ render ~ container:", container);
       console.log("\u{1F680} ~ render ~ container:", container?._vnode);
       container._vnode = vnode;
     }
@@ -772,7 +779,9 @@ function createRenderer(options) {
 
 // packages/runtime-dom/src/index.ts
 var renderOptions = Object.assign({ patchProp }, nodeOps);
+console.log("\u{1F680} ~ renderOptions:", renderOptions);
 var render = (vnode, container) => {
+  console.log("\u{1F680} ~ render ~ vnode:", vnode, container);
   return createRenderer(renderOptions).render(vnode, container);
 };
 export {
