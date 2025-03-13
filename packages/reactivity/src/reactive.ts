@@ -2,6 +2,7 @@ import { isObject } from "@vue/shared";
 import { mutableHandlers } from "./baseHandler";
 import { ReactiveFlags } from "./constants";
 
+// 缓存
 const reactiveMap = new WeakMap();
 
 function createReactiveObject(target: object) {

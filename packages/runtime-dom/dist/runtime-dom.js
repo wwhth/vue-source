@@ -238,9 +238,13 @@ var ReactiveEffect = class {
     this._trackId = 0;
     //记录当前的effect执行了几次
     this.deps = [];
+    //记录当前effect关联的dep
     this._depLength = 0;
+    //记录当前effect关联了几个dep
     this._running = 0;
+    //记录当前effect是否正在运行
     this._dirtyLevel = 4 /* Dirty */;
+    // dirtyLevel用来记录当前effect是否dirty
     // 默认是响应式的
     this.active = true;
   }
@@ -258,6 +262,7 @@ var ReactiveEffect = class {
     let lastEffect = activeEffect;
     try {
       activeEffect = this;
+      console.log("\u{1F680} ~ ReactiveEffect ~ run ~ this:", this);
       preCleanEffect(this);
       this._running++;
       return this.fn();

@@ -8,7 +8,7 @@ export const createDep = (cleanup, key) => {
   dep.name = key;
   return dep;
 };
-
+//   收集依赖
 export function track(target, key) {
   // TODO
   // activeEffect  如果有这个值，说明是在effect中调用的，需要收集依赖
@@ -30,7 +30,6 @@ export function track(target, key) {
 
   }
 }
-
 export function trigger(target, key, newValue, oldValue) {
   let depsMap = targetMap.get(target);
   if (!depsMap) return;

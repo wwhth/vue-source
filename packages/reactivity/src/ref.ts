@@ -13,7 +13,8 @@ function createRef(value: any) {
 class RefImpl {
   public __v_isRef = true; // 标识当前对象是ref对象
   public _value: any; // 保存原始值
-  public dep: any = new Set(); // 收集对应的effect
+  // public dep: any = new Set(); // 收集对应的effect
+  public dep: any = new Map(); // 收集对应的effect
   constructor(public rawValue: any) {
     this._value = toReactive(rawValue); // 将原始值转换为响应式对象
   }
@@ -41,7 +42,8 @@ export function trackRefValue(ref) {
 }
 export function triggerRefValue(ref) {
   let dep = ref.dep;
-  if (dep) {
+  // if (dep) {
+  if (dep.size) {
     triggerEffects(dep); // 触发依赖更新
   }
 }
@@ -55,7 +57,7 @@ class ObjectRefImpl {
     this._object[this.key] = newValue;
   }
 }
-
+//  将对象的key值转换为ref对象
 export function toRef(object, key) {
   if (isObject(object)) {
     return new ObjectRefImpl(object, key);
@@ -64,7 +66,7 @@ export function toRef(object, key) {
     return new Error("object must be a object");
   }
 }
-
+// 将对象转换为ref对象
 export function toRefs(object: any) {
   if (isObject(object)) {
     const ret = {};
@@ -76,7 +78,7 @@ export function toRefs(object: any) {
     return new Error("object must be a object");
   }
 }
-
+// 将对象转换为响应式对象，不需要使用.value
 export function proxyRefs(object: any) {
   return new Proxy(object, {
     get(target, key, revevier) {

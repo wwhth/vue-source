@@ -17,6 +17,7 @@ export function effect(fn, options?) {
   runner.effect = _effect;
   return runner;
 }
+
 export let activeEffect;
 
 function preCleanEffect(effect) {
@@ -34,10 +35,10 @@ function postCleanEffect(effect) {
 }
 export class ReactiveEffect {
   _trackId = 0; //记录当前的effect执行了几次
-  deps = [];
-  _depLength = 0;
-  _running = 0;
-  _dirtyLevel = DirtyLevels.Dirty;
+  deps = [];  //记录当前effect关联的dep
+  _depLength = 0; //记录当前effect关联了几个dep
+  _running = 0; //记录当前effect是否正在运行
+  _dirtyLevel = DirtyLevels.Dirty; // dirtyLevel用来记录当前effect是否dirty
   // 默认是响应式的
   public active = true;
   // fn用户编写的函数，scheduler(数据发生变化调用run)调度函数
@@ -52,12 +53,14 @@ export class ReactiveEffect {
     // 每次运行effect后变为Nodirty
     this._dirtyLevel = DirtyLevels.NoDirty;
     if (!this.active) {
-      // 不是激活的，执行后什么都不做
+      // 不是激活(响应式)的，执行后什么都不做
       return this.fn();
     }
+    
     let lastEffect = activeEffect;
     try {
       activeEffect = this;
+      console.log("🚀 ~ ReactiveEffect ~ run ~ this:", this)
       preCleanEffect(this);
       this._running++; //运行一次+1
       return this.fn(); //依赖收集
